@@ -1,0 +1,222 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Feed - ConnectX{% endblock %}
+
+{% block extra_css %}
+<style>
+    .feed-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .create-post-box {
+        background: white;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+    .create-post-box textarea {
+        width: 100%;
+        padding: 15px;
+        border: 2px solid #f0f0f0;
+        border-radius: 10px;
+        font-size: 16px;
+        font-family: inherit;
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .post-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 15px;
+    }
+
+    .btn-share {
+        padding: 10px 30px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="feed-container">
+    <!-- Create Post Box -->
+    <div class="create-post-box">
+        <p style="font-weight: 600; margin-bottom: 15px; color: #333;">💭 What's on your mind?</p>
+        <form method="POST" action="{% url 'create_post' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <textarea name="content" placeholder="Share your thoughts, ideas, or updates..." required></textarea>
+
+            <div class="post-actions">
+                <div>
+                    <label for="image-upload" style="cursor: pointer; color: #667eea; font-weight: 600;">
+                        <i class="fas fa-image"></i> Add Image
+                    </label>
+                    <input type="file" id="image-upload" name="image" accept="image/*" style="display: none;">
+                </div>
+                <button type="submit" class="btn-share">
+                    <i class="fas fa-paper-plane"></i> Post
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Filters -->
+    <div style="margin-bottom: 20px;">
+        <div class="search-box">
+            <form method="GET" style="display: flex; gap: 10px; width: 100%;">
+                <input type="text" name="search" placeholder="Search posts..." value="{{ search_query }}"
+                    style="flex: 1;">
+                <button type="submit" class="btn btn-primary" style="padding: 10px 20px;">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+        </div>
+        <div class="filter-buttons">
+            <form method="GET" style="display: flex; gap: 10px;">
+                <input type="hidden" name="search" value="{{ search_query }}">
+                <button type="submit" name="type" value=""
+                    class="filter-btn {% if not content_type %}active{% endif %}">
+                    All Posts
+                </button>
+                <button type="submit" name="type" value="text"
+                    class="filter-btn {% if content_type == 'text' %}active{% endif %}">
+                    Text Only
+                </button>
+                <button type="submit" name="type" value="image"
+                    class="filter-btn {% if content_type == 'image' %}active{% endif %}">
+                    Images
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Posts Feed -->
+    {% if posts %}
+    {% for post in posts %}
+    <div class="post-card">
+        <!-- Post Header -->
+        <div class="post-header">
+            <div class="post-author">
+                <div
+                    style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                    {{ post.author.username.0|upper }}
+                </div>
+                <div class="post-author-info">
+                    <h4>{{ post.author.username }}</h4>
+                    <div class="timestamp">
+                        <i class="fas fa-clock"></i> {{ post.created_at|date:"M d, Y H:i" }}
+                    </div>
+                </div>
+            </div>
+            {% if post.author == user %}
+            <a href="{% url 'delete_post' post.id %}" class="btn btn-danger btn-small"
+                onclick="return confirm('Delete this post?');">
+                <i class="fas fa-trash"></i>
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- Toxic Warning (if applicable) -->
+        {% if post.is_toxic %}
+        <div class="toxic-warning" style="margin: 15px;">
+            <div class="icon">⚠️</div>
+            <div class="toxic-warning-text">
+                <p><strong>⚠️ Toxic Content Detected</strong></p>
+                <p>This post contains potentially harmful language. Please consider rephrasing for a more respectful
+                    community.</p>
+                <p><small>Toxicity Score: {{ post.toxic_score|floatformat:2 }}%</small></p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Post Body -->
+        <div class="post-body">
+            <div class="post-content">
+                {{ post.content }}
+            </div>
+            {% if post.image %}
+            <img src="{{ post.image.url }}" alt="Post image" class="post-image">
+            {% endif %}
+        </div>
+
+        <!-- Post Footer -->
+        <div class="post-footer">
+            <a href="{% url 'like_post' post.id %}" class="post-action {% if user in post.likes.all %}liked{% endif %}">
+                <i class="fas fa-heart"></i>
+                <span>{{ post.like_count }}</span>
+            </a>
+
+            <div class="post-action">
+                <i class="fas fa-comment"></i>
+                <span>{{ post.comments.count }}</span>
+            </div>
+
+            <div class="post-action">
+                <i class="fas fa-share"></i>
+                <span>Share</span>
+            </div>
+        </div>
+
+        <!-- ================= COMMENT SECTION ================= -->
+
+        <div style="padding: 15px; border-top: 1px solid #f0f0f0;">
+
+            <!-- Comment Form -->
+            <form method="POST" action="{% url 'add_comment' post.id %}"
+                style="display: flex; gap: 10px; margin-bottom: 12px;">
+                {% csrf_token %}
+                <input type="text" name="content" placeholder="Write a comment..."
+                    style="flex: 1; padding: 8px 12px; border-radius: 20px; border: 1px solid #ddd;" required>
+                <button type="submit"
+                    style="padding: 8px 15px; border-radius: 20px; border: none; background: #667eea; color: white;">
+                    Post
+                </button>
+            </form>
+
+            <!-- Comment List -->
+            {% for comment in post.comments.all %}
+            <div style="margin-bottom: 8px; font-size: 14px;">
+                <strong>{{ comment.author.username }}</strong>
+                {{ comment.content }}
+            </div>
+            {% empty %}
+            <div style="font-size: 13px; color: #999;">
+                No comments yet.
+            </div>
+            {% endfor %}
+
+        </div>
+
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-inbox"></i>
+        <p>No posts to display. Be the first to share! 🚀</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Handle image upload preview
+    document.getElementById('image-upload').addEventListener('change', function (e) {
+        const file = this.files[0];
+        if (file) {
+            const label = document.querySelector('label[for="image-upload"]');
+            label.textContent = '✓ ' + file.name;
+        }
+    });
+</script>
+{% endblock %}

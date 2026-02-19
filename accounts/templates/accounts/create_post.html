@@ -1,0 +1,263 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Create Post - ConnectX{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-container {
+        max-width: 600px;
+        margin: 60px auto;
+    }
+
+    .preview-box {
+        background: #f9f9f9;
+        padding: 15px;
+        border-radius: 10px;
+        margin-top: 15px;
+        display: none;
+    }
+
+    .preview-box img {
+        width: 100%;
+        border-radius: 10px;
+        max-height: 300px;
+        object-fit: cover;
+    }
+
+    .char-counter {
+        font-size: 12px;
+        color: #999;
+        margin-top: 5px;
+    }
+
+    .toxic-indicator {
+        padding: 12px;
+        border-radius: 8px;
+        margin-top: 10px;
+        display: none;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .toxic-indicator.danger {
+        background: #ffebee;
+        border-left: 4px solid #f44336;
+        display: flex;
+    }
+
+    .toxic-indicator.safe {
+        background: #e8f5e9;
+        border-left: 4px solid #4caf50;
+        display: flex;
+    }
+
+    .suggestion-box {
+        background: #f0f7ff;
+        padding: 12px;
+        border-radius: 8px;
+        margin-top: 10px;
+        border-left: 4px solid #2196F3;
+        display: none;
+    }
+
+    .suggestion-box h5 {
+        margin: 0 0 8px 0;
+        color: #1976D2;
+        font-size: 14px;
+    }
+
+    .suggestion-box p {
+        margin: 5px 0;
+        font-size: 13px;
+        color: #333;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="create-container">
+    <div class="card">
+        <h2 style="margin-bottom: 30px; color: #333;">
+            <i class="fas fa-pen-fancy"></i> Create New Post
+        </h2>
+
+        {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+        {% if safer_alternative %}
+        <div class="suggestion-box" style="display:block;">
+            <h5>💡 Suggested Alternative:</h5>
+            <p>{{ safer_alternative }}</p>
+        </div>
+        {% endif %}
+
+
+        <form method="POST" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="content">What's on your mind?</label>
+                <textarea id="content" name="content"
+                    rows="8">{{ safer_alternative|default:original_content|default:'' }}</textarea>
+
+
+                {% if safer_alternative %}
+                <input type="hidden" name="skip_detection" value="true">
+                {% endif %}
+
+
+                <div class="char-counter">
+                    <span id="char-count">0</span>/500 characters
+                </div>
+
+                <div id="toxic-indicator" class="toxic-indicator"></div>
+
+                <div id="suggestion-box" class="suggestion-box">
+                    <h5>💡 Suggested Alternative:</h5>
+                    <p id="suggestion-text"></p>
+                    <button type="button" id="use-suggestion-btn" class="btn btn-secondary"
+                        style="margin-top:8px; padding:6px 10px; font-size:12px;">
+                        Use This Suggestion
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="image">Add Image (Optional)</label>
+                <input type="file" id="image" name="image" accept="image/*">
+                <small style="color: #999;">Supported: JPG, PNG, GIF (Max 5MB)</small>
+
+                <div id="preview-box" class="preview-box">
+                    <p style="font-weight: 600; margin-bottom: 10px;">Preview:</p>
+                    <img id="preview-image" alt="Preview">
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn btn-primary" style="flex: 1; padding: 12px;">
+                    <i class="fas fa-paper-plane"></i> Post
+                </button>
+                <a href="{% url 'feed' %}" class="btn btn-secondary"
+                    style="flex: 1; padding: 12px; text-align: center;">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const contentTextarea = document.getElementById('content');
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const charCount = document.getElementById('char-count');
+    const toxicIndicator = document.getElementById('toxic-indicator');
+    const suggestionBox = document.getElementById('suggestion-box');
+    const imageInput = document.getElementById('image');
+    const previewBox = document.getElementById('preview-box');
+    const previewImage = document.getElementById('preview-image');
+
+    // Character counter
+    charCount.textContent = contentTextarea.value.length;
+
+    contentTextarea.addEventListener('input', function () {
+
+        if (this.value.length > 500) {
+            this.value = this.value.substring(0, 500);
+        }
+
+        charCount.textContent = this.value.length;
+
+        checkToxicContent(this.value);
+    });
+
+    // Image preview
+    imageInput.addEventListener('change', function () {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                previewImage.src = e.target.result;
+                previewBox.style.display = 'block';
+            };
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+
+    function checkToxicContent(content) {
+
+        if (content.trim().length < 3) {
+            toxicIndicator.style.display = 'none';
+            suggestionBox.style.display = 'none';
+            return;
+        }
+
+        fetch('{% url "check_toxic" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify({ content: content })
+        })
+            .then(response => response.json())
+            .then(data => {
+
+                if (data.is_toxic) {
+
+                    toxicIndicator.className = 'toxic-indicator danger';
+                    toxicIndicator.innerHTML = `
+                <span style="font-size: 20px;">⚠️</span>
+                <div>
+                    <strong>Toxic content detected</strong>
+                    <p style="margin: 2px 0; font-size: 13px;">
+                        Please revise your message before posting.
+                    </p>
+                </div>
+            `;
+                    toxicIndicator.style.display = 'flex';
+
+                    if (data.safer_alternative) {
+                        suggestionBox.style.display = 'block';
+                        document.getElementById('suggestion-text').textContent = data.safer_alternative;
+                    }
+
+                } else {
+
+                    toxicIndicator.className = 'toxic-indicator safe';
+                    toxicIndicator.innerHTML = `
+                <span style="font-size: 20px;">✓</span>
+                <div>
+                    <strong>Your message looks respectful</strong>
+                </div>
+            `;
+                    toxicIndicator.style.display = 'flex';
+
+                    suggestionBox.style.display = 'none';
+                }
+            });
+    }
+
+    // Use suggestion
+    document.getElementById('use-suggestion-btn').addEventListener('click', function () {
+
+        const suggestionText = document.getElementById('suggestion-text').textContent.trim();
+
+        if (suggestionText !== "") {
+            contentTextarea.value = suggestionText;
+            charCount.textContent = suggestionText.length;
+
+            toxicIndicator.className = 'toxic-indicator safe';
+            toxicIndicator.innerHTML = `
+            <span style="font-size: 20px;">✓</span>
+            <div>
+                <strong>Your message has been revised and is now respectful.</strong>
+            </div>
+        `;
+            toxicIndicator.style.display = 'flex';
+
+            suggestionBox.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}
