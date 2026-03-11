@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -405,7 +406,9 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         @media (max-width: 768px) {
@@ -430,9 +433,50 @@
             }
         }
 
-        {% block extra_css %}{% endblock %}
+        /* Dark Mode */
+        body.dark-mode {
+            background: #121212;
+            color: #e0e0e0;
+        }
+
+        .dark-mode header {
+            background: #1e1e1e;
+        }
+
+        .dark-mode .card,
+        .dark-mode .post-card,
+        .dark-mode form,
+        .dark-mode .stat-card {
+            background: #1e1e1e;
+            color: #e0e0e0;
+        }
+
+        .dark-mode input,
+        .dark-mode textarea,
+        .dark-mode select {
+            background: #2a2a2a;
+            color: white;
+            border-color: #444;
+        }
+
+        .dark-mode .nav-links a {
+            color: #e0e0e0;
+        }
+
+        .dark-mode .nav-links a:hover {
+            color: #90caf9;
+        }
+
+            {
+            % block extra_css %
+        }
+
+            {
+            % endblock %
+        }
     </style>
 </head>
+
 <body>
     <header>
         <div class="container">
@@ -440,16 +484,19 @@
                 <div class="logo">🔗 ConnectX</div>
                 <ul class="nav-links">
                     {% if user.is_authenticated %}
-                        <li><a href="{% url 'feed' %}"><i class="fas fa-home"></i> Feed</a></li>
-                        <li><a href="{% url 'analytics_dashboard' %}"><i class="fas fa-chart-bar"></i> Analytics</a></li>
-                        <li><a href="{% url 'create_post' %}"><i class="fas fa-plus"></i> Post</a></li>
-                        <div class="user-info">
-                            <p>👤 {{ user.username }}</p>
-                            <a href="{% url 'logout' %}" class="btn btn-danger btn-small">Logout</a>
-                        </div>
+                    <li><a href="{% url 'feed' %}"><i class="fas fa-home"></i> Feed</a></li>
+                    <li><a href="{% url 'analytics_dashboard' %}"><i class="fas fa-chart-bar"></i> Analytics</a></li>
+                    <li><a href="{% url 'create_post' %}"><i class="fas fa-plus"></i> Post</a></li>
+                    <div class="user-info">
+                        <p>👤 {{ user.username }}</p>
+                        <a href="{% url 'logout' %}" class="btn btn-danger btn-small">Logout</a>
+                        <button onclick="toggleTheme()" class="btn btn-secondary btn-small">
+                            🌙
+                        </button>
+                    </div>
                     {% else %}
-                        <li><a href="{% url 'login' %}" class="btn btn-primary">Login</a></li>
-                        <li><a href="{% url 'register' %}" class="btn btn-secondary">Register</a></li>
+                    <li><a href="{% url 'login' %}" class="btn btn-primary">Login</a></li>
+                    <li><a href="{% url 'register' %}" class="btn btn-secondary">Register</a></li>
                     {% endif %}
                 </ul>
             </nav>
@@ -459,9 +506,9 @@
     <main>
         <div class="container">
             {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-                {% endfor %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
             {% endif %}
 
             {% block content %}{% endblock %}
@@ -486,8 +533,27 @@
         }
 
         const csrftoken = getCookie('csrftoken');
+        function toggleTheme() {
+            document.body.classList.toggle("dark-mode");
 
-        {% block extra_js %}{% endblock %}
+            if (document.body.classList.contains("dark-mode")) {
+                localStorage.setItem("theme", "dark");
+            } else {
+                localStorage.setItem("theme", "light");
+            }
+        }
+
+        // Load saved theme
+        window.onload = function () {
+            const savedTheme = localStorage.getItem("theme");
+
+            if (savedTheme === "dark") {
+                document.body.classList.add("dark-mode");
+            }
+        }
+
+        {% block extra_js %} {% endblock %}
     </script>
 </body>
+
 </html>

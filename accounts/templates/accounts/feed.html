@@ -118,6 +118,19 @@
                     </div>
                 </div>
             </div>
+            <!-- 🔥 ADD FOLLOW BUTTON HERE -->
+            {% if post.author != request.user %}
+            {% if post.author in request.user.profile.following.all %}
+            <a href="{% url 'unfollow_user' post.author.id %}" class="btn btn-small">
+                Unfollow
+            </a>
+            {% else %}
+            <a href="{% url 'follow_user' post.author.id %}" class="btn btn-small">
+                Follow
+            </a>
+            {% endif %}
+            {% endif %}
+            <!-- 🔥 END FOLLOW BUTTON -->
             {% if post.author == user %}
             <a href="{% url 'delete_post' post.id %}" class="btn btn-danger btn-small"
                 onclick="return confirm('Delete this post?');">
@@ -184,16 +197,25 @@
             </form>
 
             <!-- Comment List -->
+            <!-- Comment List -->
             {% for comment in post.comments.all %}
-            <div style="margin-bottom: 8px; font-size: 14px;">
+            <div class="comment-box {% if comment.is_toxic %}toxic-comment{% endif %}">
                 <strong>{{ comment.author.username }}</strong>
+                {% if comment.is_toxic %}
+                <div class="toxic-warning-text">
+                    ⚠️ This comment has been flagged as toxic
+                </div>
+                {% else %}
                 {{ comment.content }}
+                {% endif %}
             </div>
+
             {% empty %}
-            <div style="font-size: 13px; color: #999;">
+            <div class="no-comments">
                 No comments yet.
             </div>
             {% endfor %}
+
 
         </div>
 

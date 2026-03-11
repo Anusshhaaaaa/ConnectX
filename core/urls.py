@@ -17,6 +17,10 @@ urlpatterns = [
     path('dashboard/', views.analytics_dashboard, name='analytics_dashboard'),
     path('api/check-toxic/', views.check_toxic, name='check_toxic'),
     path('comment/<int:post_id>/', views.add_comment, name='add_comment'),
+    path('follow/<int:user_id>/', views.follow_user, name='follow_user'),
+    path('unfollow/<int:user_id>/', views.unfollow_user, name='unfollow_user'),
+    path('discover/', views.discover_users, name='discover_users'),
+
 ]
 
 # Serve media files in development

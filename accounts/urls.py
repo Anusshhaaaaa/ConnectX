@@ -3,13 +3,19 @@ from django.urls import path
 from django.contrib.auth import views as auth_views
 from accounts import views
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.landing, name='landing'),
     path('login/', auth_views.LoginView.as_view(
         template_name='accounts/login.html'
     ), name='login'),
-    path('dashboard/', views.home, name='dashboard'),
+    path('feed/', views.feed, name='feed'),
     path('chat/<int:user_id>/', views.chat_view, name='chat'),
     path('comment/<int:post_id>/', views.add_comment, name='add_comment'),
+    path('follow/<int:user_id>/', views.follow_user, name='follow_user'),
+    path('unfollow/<int:user_id>/', views.unfollow_user, name='unfollow_user'),
+    path('discover/', views.discover_users, name='discover_users'),
+    
+
 ]
