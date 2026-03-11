@@ -14,7 +14,7 @@ body {
     width: 350px;
     text-align: center;
     border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 }
 
 h1 {
@@ -40,10 +40,33 @@ button {
 button:hover {
     background-color: #5a67d8;
 }
+
 input {
     width: 100%;
     padding: 12px;
     border-radius: 6px;
     border: 1px solid #ccc;
     font-size: 14px;
+}
+
+.comment-box {
+    margin-bottom: 8px;
+    font-size: 14px;
+    padding: 6px;
+}
+
+.toxic-comment {
+    background-color: #ffe6e6;
+    border-left: 4px solid red;
+}
+
+.toxic-warning-text {
+    color: red;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.no-comments {
+    font-size: 13px;
+    color: #999;
 }

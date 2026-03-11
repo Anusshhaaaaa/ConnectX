@@ -1,0 +1,13 @@
+<h1>Discover Users</h1>
+
+{% for user in users %}
+<div style="margin-bottom:10px;">
+    <strong>{{ user.username }}</strong>
+
+    <a href="{% url 'follow_user' user.id %}">
+        Follow
+    </a>
+</div>
+{% empty %}
+<p>No users found.</p>
+{% endfor %}

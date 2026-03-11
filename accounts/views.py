@@ -6,6 +6,7 @@ from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.db.models import Q, Count
 from datetime import datetime, timedelta
+from .models import Profile
 import json
 
 from .models import Post, Comment, ContentAnalytics
@@ -18,8 +19,8 @@ from .utils import detect_toxic_content, get_safer_alternative, analyze_image_to
 
 TOXIC_THRESHOLD = 0.5
 
-hard_block_words = ["idiot", "stupid", "moron", "kill"]
-soft_boost_words = ["trash", "nonsense", "useless"]
+hard_block_words = ["idiot", "stupid", "moron", "kill","nonsense",]
+soft_boost_words = ["trash", "ridiculous", "useless"]
 safe_override_words = ["kill process", "execute command"]
 
 
@@ -107,7 +108,10 @@ def register_view(request):
 
 @login_required(login_url='login')
 def feed(request):
-    posts = Post.objects.all()
+    posts = Post.objects.filter(
+    author__in=request.user.profile.following.all()
+) | Post.objects.filter(author=request.user)
+
 
     search_query = request.GET.get('search', '')
     if search_query:
@@ -261,23 +265,18 @@ def add_comment(request, post_id):
         is_toxic = True
         toxic_score = max(toxic_score, 0.75)
 
-    if is_toxic:
-        return redirect('feed')  # You can later improve UX here
-
     # =========================
-    # CREATE COMMENT
+    # CREATE COMMENT (NO BLOCKING)
     # =========================
     Comment.objects.create(
         post=post,
         author=request.user,
         content=content,
-        is_toxic=False,
+        is_toxic=is_toxic,   # 🔥 now dynamic
         toxic_score=toxic_score
     )
 
     return redirect('feed')
-
-
 
 # ============================================
 # CHAT VIEW
@@ -371,4 +370,27 @@ def check_toxic(request):
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+# your existing views above...
+@login_required(login_url='login')
+def follow_user(request, user_id):
+    user_to_follow = get_object_or_404(User, id=user_id)
+    request.user.profile.following.add(user_to_follow)
+    return redirect('feed')
+    
+@login_required(login_url='login')
+def unfollow_user(request, user_id):
+    user_to_unfollow = get_object_or_404(User, id=user_id)
+    request.user.profile.following.remove(user_to_unfollow)
+    return redirect('feed')
+
+@login_required(login_url='login')
+def discover_users(request):
+
+    users = User.objects.exclude(id=request.user.id)
+
+    return render(request, 'accounts/discover.html', {
+        'users': users
+    })
+
 
