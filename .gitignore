@@ -1,4 +1,22 @@
-accounts/__pycache__/utils.cpython-314.pyc
-core/__pycache__/settings.cpython-314.pyc
-core/__pycache__/settings.cpython-314.pyc
-core/__pycache__/settings.cpython-314.pyc
+# accounts/__pycache__/utils.cpython-314.pyc
+# core/__pycache__/settings.cpython-314.pyc
+# core/__pycache__/settings.cpython-314.pyc
+# core/__pycache__/settings.cpython-314.pyc
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+venv/
+
+# Environment variables
+.env
+
+# Django
+db.sqlite3
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
