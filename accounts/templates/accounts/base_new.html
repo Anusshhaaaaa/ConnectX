@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ConnectX{% endblock %}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico:wght@400&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #fafafa;
+            min-height: 100vh;
+            color: #262626;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Fixed Top Header */
+        .top-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            height: 60px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            border-bottom: 1px solid #dbdbdb;
+        }
+
+        .back-btn {
+            color: #262626;
+            font-size: 20px;
+            text-decoration: none;
+        }
+
+        .logo {
+            font-family: 'Pacifico', cursive;
+            font-size: 26px;
+            background: linear-gradient(135deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 400;
+            flex: 1;
+            text-align: center;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #262626;
+            padding: 5px;
+        }
+
+        /* Scrollable Main */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 60px 10px 90px;
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .container {
+            width: 100%;
+            padding: 0;
+            max-width: none;
+        }
+
+        /* Fixed Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            height: 70px;
+            z-index: 100;
+            display: flex;
+            border-top: 1px solid #dbdbdb;
+            box-shadow: 0 -1px 2px rgba(0,0,0,0.1);
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: #8e8e8e;
+            font-size: 10px;
+            font-weight: 600;
+            padding-top: 8px;
+            transition: color 0.2s;
+        }
+
+        .nav-item i {
+            font-size: 20px;
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        .nav-item.active {
+            color: #262626;
+        }
+
+        .nav-item.create {
+            position: relative;
+        }
+
+        .nav-item.create i {
+            background: linear-gradient(135deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        /* Post Styles Mobile */
+        .post-card {
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .post-header {
+            padding: 15px;
+        }
+
+        .post-author-info h4 {
+            font-size: 16px;
+        }
+
+        .post-body {
+            padding: 15px;
+        }
+
+        .post-footer {
+            padding: 10px 15px;
+            justify-content: space-evenly;
+        }
+
+        .post-action {
+            padding: 5px 10px;
+        }
+
+        /* Auth Guest Screen */
+        .guest-screen {
+            text-align: center;
+            padding: 100px 20px;
+            max-width: 350px;
+            margin: 0 auto;
+        }
+
+        /* Keep existing styles but mobile-first */
+        .btn {
+            border-radius: 8px;
+            padding: 8px 16px;
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        @media (min-width: 768px) {
+            main {
+                max-width: 600px;
+            }
+        }
+
+        /* Dark Mode */
+        body.dark-mode {
+            background: #000;
+            color: #fff;
+        }
+
+        body.dark-mode .top-header,
+        body.dark-mode .bottom-nav {
+            background: #1e1e1e;
+            border-color: #333;
+        }
+
+        {% block extra_css %}{% endblock %}
+    </style>
+</head>
+
+<body class="{% if user.is_authenticated %}auth{% else %}guest{% endif %}">
+    {% if user.is_authenticated %}
+    <!-- Fixed Top Header for Auth -->
+    <div class="top-header">
+        <a href="javascript:history.back()" class="back-btn" style="margin-right: auto;">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <h1 class="logo">ConnectX</h1>
+        <button onclick="toggleTheme()" class="theme-toggle" style="margin-left: auto;">
+            <i class="fas fa-moon"></i>
+        </button>
+    </div>
+
+    <!-- Main Content -->
+    <main>
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Fixed Bottom Nav for Auth -->
+    <nav class="bottom-nav">
+        <a href="{% url 'feed' %}" class="nav-item active">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="{% url 'analytics_dashboard' %}" class="nav-item">
+            <i class="fas fa-chart-line"></i>
+            <span>Analytics</span>
+        </a>
+        <a href="{% url 'create_post' %}" class="nav-item create">
+            <i class="fas fa-plus"></i>
+            <span>Create</span>
+        </a>
+        <a href="{% url 'profile' %}" class="nav-item">
+            <i class="far fa-user"></i>
+            <span>Profile</span>
+        </a>
+    </nav>
+    {% else %}
+    <!-- Guest Screen (landing/login/register) -->
+    <main class="guest-screen">
+        {% block content %}{% endblock %}
+    </main>
+    {% endif %}
+
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const csrftoken = getCookie('csrftoken');
+        
+        function toggleTheme() {
+            document.body.classList.toggle("dark-mode");
+            localStorage.setItem("theme", document.body.classList.contains("dark-mode") ? "dark" : "light");
+        }
+
+        window.onload = function () {
+            const savedTheme = localStorage.getItem("theme");
+            if (savedTheme === "dark") {
+                document.body.classList.add("dark-mode");
+            }
+        }
+
+        {% block extra_js %}{% endblock %}
+    </script>
+</body>
+
+</html>

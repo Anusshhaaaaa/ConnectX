@@ -4,7 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Avg
+from django.utils import timezone
 from datetime import datetime, timedelta
 from .models import Profile
 import json
@@ -108,10 +109,10 @@ def register_view(request):
 
 @login_required(login_url='login')
 def feed(request):
-    posts = Post.objects.filter(
-    author__in=request.user.profile.following.all()
-) | Post.objects.filter(author=request.user)
-
+    if not hasattr(request.user, 'profile'):
+        Profile.objects.get_or_create(user=request.user)
+    profile = request.user.profile
+    posts = Post.objects.exclude(author=request.user)
 
     search_query = request.GET.get('search', '')
     if search_query:
@@ -136,6 +137,52 @@ def feed(request):
 
 
 @login_required(login_url='login')
+def profile_view(request):
+    if not hasattr(request.user, 'profile'):
+        Profile.objects.get_or_create(user=request.user)
+    profile = request.user.profile
+    
+    own_posts = Post.objects.filter(author=request.user).annotate(
+        like_count=Count('likes')
+    ).order_by('-created_at')
+    
+    stats = {
+        'posts': own_posts.count(),
+        'followers': profile.following.through.objects.filter(user__id=profile.user.id).count(),
+        'following': profile.following.count(),
+    }
+    
+    # Global analytics data (keep existing)
+    thirty_days_ago = datetime.now().date() - timedelta(days=30)
+    analytics_data = ContentAnalytics.objects.filter(date__gte=thirty_days_ago).order_by('date')
+
+    total_posts = Post.objects.count()
+    toxic_posts = Post.objects.filter(is_toxic=True).count()
+
+    safe_posts = Post.objects.filter(originally_toxic=False).count()
+
+    avg_toxic_list = list(Post.objects.filter(is_toxic=True).values_list('toxic_score', flat=True))
+    avg_toxic_score = sum(avg_toxic_list) / len(avg_toxic_list) if avg_toxic_list else 0
+
+    safe_percentage = (safe_posts / total_posts * 100) if total_posts > 0 else 0
+    toxic_percentage = 100 - safe_percentage
+
+    return render(request, 'accounts/profile.html', {
+        'profile': profile,
+        'own_posts': own_posts,
+        'stats': stats,
+        'total_posts': total_posts,
+        'toxic_posts': toxic_posts,
+
+        'safe_posts': safe_posts,
+        'avg_toxic_score': round(avg_toxic_score, 2),
+        'safe_percentage': round(safe_percentage, 1),
+        'toxic_percentage': round(toxic_percentage, 1),
+        'analytics_data': analytics_data,
+    })
+
+
+@login_required(login_url='login')
 @require_http_methods(["GET", "POST"])
 def create_post(request):
 
@@ -144,15 +191,13 @@ def create_post(request):
         image = request.FILES.get('image')
 
         if not content and not image:
-            return render(request, 'accounts/create_post.html', {
+            return render(request, 'accounts/create_post_fixed.html', {
                 'error': 'Post cannot be empty'
             })
 
-        # =========================
-        # TEXT TOXICITY CHECK
-        # =========================
+        # Step 1: Check toxicity via API
         is_toxic = False
-        toxic_score = 0
+        toxic_score = 0.0
 
         if content:
             is_toxic, toxic_score = detect_toxic_content(content)
@@ -170,45 +215,34 @@ def create_post(request):
                 is_toxic = True
                 toxic_score = max(toxic_score, 0.75)
 
-            if is_toxic:
-                safer_alternative = get_safer_alternative(content, is_toxic)
-
-                return render(request, 'accounts/create_post.html', {
-                    'error': 'Toxic text detected. Please revise your message.',
-                    'original_content': content,
-                    'toxicity_score': round(toxic_score, 2),
-                    'safer_alternative': safer_alternative
-                })
-
-        # =========================
-        # IMAGE TOXICITY CHECK
-        # =========================
-        if image:
-            image_result = analyze_image_toxicity(image)
-
-            if image_result.get("is_toxic"):
-                return render(request, 'accounts/create_post.html', {
-                    'error': 'Toxic image detected. Please upload a safe image.',
-                    'image_feedback': image_result.get("reason"),
-                    'original_content': content,
-                    'toxicity_score': toxic_score
-                })
-
-        # =========================
-        # CREATE POST
-        # =========================
-        Post.objects.create(
+        # Step 2: Create post object
+        post = Post.objects.create(
             author=request.user,
             content=content,
             image=image,
-            is_toxic=False,
+            originally_toxic=is_toxic,
             toxic_score=toxic_score
         )
+
+        # Step 3: Optionally rewrite toxic content
+        if is_toxic:
+            post.safer_content = get_safer_alternative(content, is_toxic)
+            post.save()  # triggers model logic: originally_toxic → is_toxic
+
+        # =========================
+        # IMAGE TOXICITY CHECK (WARNING ONLY)
+        # =========================
+        if image:
+            image_result = analyze_image_toxicity(image)
+            if image_result.get("is_toxic"):
+                # Log warning but save anyway
+                post.toxic_score = max(post.toxic_score, 0.8)
+                post.save()
 
         update_analytics()
         return redirect('feed')
 
-    return render(request, 'accounts/create_post.html')
+    return render(request, 'accounts/create_post_fixed.html', {})
 
 
 @login_required(login_url='login')
@@ -289,27 +323,75 @@ def chat_view(request, user_id):
 
 
 # ============================================
-# ANALYTICS
+# ANALYTICS DASHBOARD
 # ============================================
 
 @login_required(login_url='login')
 def analytics_dashboard(request):
-
-    thirty_days_ago = datetime.now().date() - timedelta(days=30)
+    if not hasattr(request.user, 'profile'):
+        Profile.objects.get_or_create(user=request.user)
+    
+    # Global analytics data - 30 days filter
+    thirty_days_ago = timezone.now() - timedelta(days=30)
     analytics_data = ContentAnalytics.objects.filter(date__gte=thirty_days_ago).order_by('date')
 
-    total_posts = Post.objects.count()
-    toxic_posts = Post.objects.filter(is_toxic=True).count()
-    safe_posts = total_posts - toxic_posts
+    # Posts - Last 30 days
+    post_qs = Post.objects.filter(created_at__gte=thirty_days_ago)
+    total_posts = post_qs.count()
+    toxic_posts = post_qs.filter(is_toxic=True).count()
+    safe_posts = post_qs.filter(originally_toxic=False).count()
+    text_posts = post_qs.filter(Q(image__isnull=True) | Q(image__exact='')).count()
+    image_posts = total_posts - text_posts
+    avg_toxic_posts = post_qs.filter(is_toxic=True).aggregate(avg=Avg('toxic_score'))['avg'] or 0.0
 
-    avg_toxic = Post.objects.filter(is_toxic=True).values_list('toxic_score', flat=True)
-    avg_toxic_score = sum(avg_toxic) / len(avg_toxic) if avg_toxic else 0
+    safe_percentage = (safe_posts / total_posts * 100) if total_posts > 0 else 0
+    toxic_percentage = 100 - safe_percentage
+
+    # Top users by post count
+    top_users = (User.objects
+                 .annotate(post_count=Count('posts'))
+                 .order_by('-post_count')[:5])
+
+    # Comments - Last 30 days
+    comment_qs = Comment.objects.filter(created_at__gte=thirty_days_ago)
+    total_comments = comment_qs.count()
+    safe_comments = comment_qs.filter(originally_toxic=False).count()
+    toxic_comments = comment_qs.filter(is_toxic=True).count()
+    avg_toxic_comments = comment_qs.filter(is_toxic=True).aggregate(avg=Avg('toxic_score'))['avg'] or 0.0
+    safe_pct_comments = (safe_comments / total_comments * 100) if total_comments else 0
+    safe_pct_posts = round(safe_percentage, 1)
+    safe_pct_comments = round(safe_pct_comments, 1)
+    toxic_pct_comments = 100 - safe_pct_comments
+    overall_health_score = (safe_pct_posts + safe_pct_comments) / 2
+
+    # Top posters and commenters (30 days)
+    top_posters = User.objects.filter(posts__created_at__gte=thirty_days_ago).annotate(
+        post_count=Count('posts')
+    ).order_by('-post_count')[:5]
+    top_commenters = User.objects.filter(comment__created_at__gte=thirty_days_ago).annotate(
+        comment_count=Count('comment')
+    ).order_by('-comment_count')[:5]
 
     return render(request, 'accounts/dashboard.html', {
         'total_posts': total_posts,
         'toxic_posts': toxic_posts,
         'safe_posts': safe_posts,
-        'avg_toxic_score': round(avg_toxic_score, 2),
+        'text_posts': text_posts,
+        'image_posts': image_posts,
+        'avg_toxic_posts': round(avg_toxic_posts, 2),
+        'safe_pct_posts': round(safe_percentage, 1),
+        'toxic_pct_posts': round(toxic_percentage, 1),
+
+        'total_comments': total_comments,
+        'toxic_comments': toxic_comments,
+        'safe_comments': safe_comments,
+        'avg_toxic_comments': round(avg_toxic_comments, 2),
+        'safe_pct_comments': round(safe_pct_comments, 1),
+'toxic_pct_comments': round(toxic_pct_comments, 1),
+        'overall_health_score': round(overall_health_score, 1),
+
+        'top_posters': top_posters,
+        'top_commenters': top_commenters,
         'analytics_data': analytics_data,
     })
 
@@ -324,12 +406,15 @@ def update_analytics():
 
     analytics.total_posts = Post.objects.count()
     analytics.total_toxic_posts = Post.objects.filter(is_toxic=True).count()
-    analytics.total_safe_posts = analytics.total_posts - analytics.total_toxic_posts
+    analytics.originally_toxic_posts = Post.objects.filter(originally_toxic=True).count()
+    analytics.rephrased_posts = Post.objects.filter(originally_toxic=True, is_toxic=False).count()
+    analytics.total_safe_posts = Post.objects.filter(originally_toxic=False).count()
 
     toxic_posts = Post.objects.filter(is_toxic=True).values_list('toxic_score', flat=True)
     analytics.avg_toxic_score = sum(toxic_posts) / len(toxic_posts) if toxic_posts else 0
 
     analytics.save()
+
 
 # ============================================
 # API ENDPOINT: CHECK TOXIC (AJAX)
@@ -371,18 +456,33 @@ def check_toxic(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
+
 # your existing views above...
 @login_required(login_url='login')
 def follow_user(request, user_id):
     user_to_follow = get_object_or_404(User, id=user_id)
-    request.user.profile.following.add(user_to_follow)
-    return redirect('feed')
+    if not request.user.profile.following.filter(id=user_id).exists():
+        request.user.profile.following.add(user_to_follow)
+    followers_count = user_to_follow.followers.count()
+    following_count = request.user.profile.following.count()
+    return JsonResponse({
+        "status": "followed",
+        "followers_count": followers_count,
+        "following_count": following_count
+    })
     
 @login_required(login_url='login')
 def unfollow_user(request, user_id):
     user_to_unfollow = get_object_or_404(User, id=user_id)
-    request.user.profile.following.remove(user_to_unfollow)
-    return redirect('feed')
+    if request.user.profile.following.filter(id=user_id).exists():
+        request.user.profile.following.remove(user_to_unfollow)
+    followers_count = user_to_unfollow.followers.count()
+    following_count = request.user.profile.following.count()
+    return JsonResponse({
+        "status": "unfollowed",
+        "followers_count": followers_count,
+        "following_count": following_count
+    })
 
 @login_required(login_url='login')
 def discover_users(request):
@@ -393,4 +493,12 @@ def discover_users(request):
         'users': users
     })
 
+@login_required(login_url='login')
+def edit_profile(request):
+    """Stub for edit profile form - to be implemented"""
+    return render(request, 'accounts/edit_profile.html', {'user': request.user})
 
+@login_required(login_url='login')
+def help_page(request):
+    """Help/Support page - to be implemented""" 
+    return render(request, 'accounts/help.html')

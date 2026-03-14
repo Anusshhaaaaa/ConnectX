@@ -17,5 +17,9 @@ urlpatterns = [
     path('unfollow/<int:user_id>/', views.unfollow_user, name='unfollow_user'),
     path('discover/', views.discover_users, name='discover_users'),
     
+    path('profile/', views.profile_view, name='profile'),
+    path('accounts/logout/', views.logout_view, name='logout'),
+    path('edit_profile/', views.edit_profile, name='edit_profile'),
+    path('help/', views.help_page, name='help'),
 
 ]

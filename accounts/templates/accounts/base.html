@@ -1,522 +1,236 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}ConnectX - Share Respectfully{% endblock %}</title>
+    <title>{% block title %}ConnectX{% endblock %}</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico:wght@400&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        header {
-            background: white;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 15px 0;
-            margin-bottom: 30px;
-        }
-
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
-        }
-
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 30px;
-            align-items: center;
-            list-style: none;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: #333;
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-
-        .nav-links a:hover {
-            color: #667eea;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .user-info p {
-            margin: 0;
-            font-weight: 500;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-secondary {
-            background: #f0f0f0;
-            color: #333;
-        }
-
-        .btn-secondary:hover {
-            background: #e0e0e0;
-        }
-
-        .btn-danger {
-            background: #ff6b6b;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #ff5252;
-        }
-
-        .btn-small {
-            padding: 6px 12px;
-            font-size: 12px;
-        }
-
-        main {
-            margin-top: 30px;
-        }
-
-        .card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .post-card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            margin-bottom: 20px;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .post-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        }
-
-        .post-header {
-            padding: 20px;
-            border-bottom: 1px solid #f0f0f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .post-author {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .post-author-info h4 {
-            margin: 0;
-            font-size: 14px;
-        }
-
-        .post-author-info .timestamp {
-            font-size: 12px;
-            color: #999;
-        }
-
-        .post-body {
-            padding: 20px;
-        }
-
-        .post-content {
-            margin-bottom: 15px;
-            line-height: 1.6;
-        }
-
-        .post-image {
-            width: 100%;
-            border-radius: 10px;
-            margin-top: 15px;
-            max-height: 400px;
-            object-fit: cover;
-        }
-
-        .toxic-warning {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .toxic-warning .icon {
-            font-size: 20px;
-            color: #ff6b6b;
-        }
-
-        .toxic-warning-text {
-            flex: 1;
-        }
-
-        .toxic-warning-text p {
-            margin: 5px 0;
-            font-size: 14px;
-        }
-
-        .post-footer {
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-around;
-            border-top: 1px solid #f0f0f0;
-        }
-
-        .post-action {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            color: #666;
-            transition: color 0.3s;
-        }
-
-        .post-action:hover {
-            color: #667eea;
-        }
-
-        .post-action.liked {
-            color: #ff6b6b;
-        }
-
-        form {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        input[type="text"],
-        input[type="email"],
-        input[type="password"],
-        textarea,
-        input[type="file"],
-        select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #f0f0f0;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-
-        input[type="text"]:focus,
-        input[type="email"]:focus,
-        input[type="password"]:focus,
-        textarea:focus,
-        input[type="file"]:focus,
-        select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 120px;
-            font-family: inherit;
-        }
-
-        .error {
-            color: #ff6b6b;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-
-        .success {
-            color: #51cf66;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-
-        .alert {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .alert-danger {
-            background: #ffebee;
-            color: #c62828;
-            border-left: 4px solid #ff6b6b;
-        }
-
-        .alert-success {
-            background: #e8f5e9;
-            color: #2e7d32;
-            border-left: 4px solid #51cf66;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .stat-number {
-            font-size: 36px;
-            font-weight: bold;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .stat-label {
-            color: #666;
-            font-size: 14px;
-            margin-top: 10px;
-        }
-
-        .search-box {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .search-box input {
-            flex: 1;
-        }
-
-        .filter-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .filter-btn {
-            padding: 8px 16px;
-            border: 2px solid #f0f0f0;
-            background: white;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s;
-        }
-
-        .filter-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-color: #667eea;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #999;
-        }
-
-        .empty-state i {
-            font-size: 48px;
-            margin-bottom: 20px;
-            opacity: 0.5;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .spinner {
-            display: inline-block;
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f0f0f0;
-            border-top-color: #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .navbar {
-                flex-wrap: wrap;
-            }
-
-            .nav-links {
-                gap: 15px;
-            }
-
-            .grid {
-                grid-template-columns: 1fr;
-            }
-
-            .post-footer {
-                flex-wrap: wrap;
-            }
-
-            .modal {
-                padding: 10px;
-            }
-        }
-
-        /* Dark Mode */
-        body.dark-mode {
-            background: #121212;
-            color: #e0e0e0;
-        }
-
-        .dark-mode header {
-            background: #1e1e1e;
-        }
-
-        .dark-mode .card,
-        .dark-mode .post-card,
-        .dark-mode form,
-        .dark-mode .stat-card {
-            background: #1e1e1e;
-            color: #e0e0e0;
-        }
-
-        .dark-mode input,
-        .dark-mode textarea,
-        .dark-mode select {
-            background: #2a2a2a;
-            color: white;
-            border-color: #444;
-        }
-
-        .dark-mode .nav-links a {
-            color: #e0e0e0;
-        }
-
-        .dark-mode .nav-links a:hover {
-            color: #90caf9;
-        }
-
-            {
-            % block extra_css %
-        }
-
-            {
-            % endblock %
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #fafafa; min-height: 100vh; color: #262626; display: flex; flex-direction: column; overflow-x: hidden; }
+.top-header { position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(135deg, #667eea, #764ba2); height: 60px; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 0 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); border-bottom: 1px solid rgba(255,255,255,0.2); }
+        .back-btn { position: absolute; left: 15px; color: #262626; font-size: 18px; text-decoration: none; }
+        .logo { font-family: 'Pacifico', cursive; font-size: 26px; background: linear-gradient(135deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 400; }
+        .settings-btn { position: absolute; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #262626; padding: 5px; border-radius: 50%; }
+        .settings-btn:hover { background: #efefef; }
+        main { flex: 1; overflow-y: auto; padding: 70px 10px 90px; width: 100%; max-width: 600px; margin: 0 auto; }
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(135deg, #667eea, #764ba2); height: 80px; z-index: 100; display: flex; border-top: 1px solid rgba(255,255,255,0.2); box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
+.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; color: white; font-size: 10px; font-weight: 600; padding-top: 5px; transition: all 0.3s ease; }
+.nav-item i { font-size: 22px; margin-bottom: 2px; }
+.nav-item:hover { transform: scale(1.1); color: #667eea; }
+.nav-item.active { color: #667eea; transform: scale(1.1); }
+        .nav-home { } .nav-analytics { } .nav-create i { background: linear-gradient(135deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 26px; font-weight: bold; -webkit-text-stroke: 1px white; color: white !important; } .nav-profile { }
+        .container, .feed-container, .dashboard-container, .profile-container { width: 100%; max-width: none; padding: 0; margin: 0; }
+        .post-card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; margin-bottom: 15px; }
+        .post-header { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #efefef; }
+        .post-author { display: flex; align-items: center; gap: 12px; flex: 1; }
+        .post-author div:first-child { width: 36px; height: 36px; }
+        .post-author-info h4 { margin: 0; font-size: 15px; font-weight: 600; }
+        .post-author-info .timestamp { font-size: 11px; color: #8e8e8e; }
+        .post-body { padding: 16px; }
+        .post-content { line-height: 1.4; font-size: 15px; }
+        .post-image { width: 100%; height: 300px; object-fit: cover; border-radius: 8px; margin-top: 8px; }
+        .post-footer { padding: 12px 16px; display: flex; justify-content: space-around; border-top: 1px solid #efefef; }
+        .post-action { display: flex; align-items: center; gap: 4px; padding: 8px; color: #8e8e8e; font-weight: 600; font-size: 14px; }
+        .post-action.liked { color: #ed4956; }
+        .comment-form { padding: 12px 16px; border-top: 1px solid #efefef; background: #fafafa; }
+        .comment-input { background: white; border-radius: 20px; border: none; padding: 8px 16px; font-size: 14px; flex: 1; margin-right: 8px; }
+        .comment-box { padding: 8px 16px 8px 16px; font-size: 14px; border-bottom: 1px solid #efefef; }
+        .comment-author { font-weight: 600; }
+        .stats-grid { display: flex; gap: 20px; padding: 20px; overflow-x: auto; }
+        .stat-card { min-width: 80px; text-align: center; flex-shrink: 0; }
+        .btn { background: #0095f6; color: white; border: none; border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; font-size: 14px; }
+        .btn-secondary { background: #efefef; color: #262626; }
+        .guest-screen { padding-top: 40px; text-align: center; }
+        body.dark-mode { background: #000; color: #fff; }
+        body.dark-mode .top-header, body.dark-mode .bottom-nav, body.dark-mode .post-card { background: #1a1a1a; border-color: #333; }
+        body.dark-mode .logo { filter: brightness(1.1); }
+        ::-webkit-scrollbar { width: 0; }
+        </style>
+
+        {% block extra_css %}{% endblock %}
+    </style>
+
+    <style>
+        /* Global Settings Modal */
+        .settings-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; backdrop-filter: blur(5px); animation: fadeIn 0.2s; }
+
+        .settings-modal.active { display: flex; align-items: center; justify-content: center; }
+        @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
+        .settings-panel { background: white; border-radius: 20px; width: 90%; max-width: 350px; max-height: 80vh; overflow-y: auto; transform: translateY(20px) scale(.95); animation: slideUp 0.3s forwards; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+        @keyframes slideUp { to {transform: translateY(0) scale(1);} }
+        body.dark-mode .settings-panel { background: #1a1a1a; color: white; }
+        .settings-header { padding: 25px 20px; text-align: center; border-bottom: 1px solid #efefef; }
+        body.dark-mode .settings-header { border-bottom-color: #333; }
+        .settings-header h3 { font-size: 24px; font-weight: 600; margin: 0; }
+        .settings-list { list-style: none; padding: 0; margin: 0; }
+        .settings-item { display: flex; align-items: center; padding: 20px; border-bottom: 1px solid #efefef; cursor: pointer; transition: background .2s; }
+        body.dark-mode .settings-item { border-bottom-color: #333; }
+        .settings-item:hover { background: #f8f9fa; }
+        body.dark-mode .settings-item:hover { background: #262626; }
+        .settings-item i { font-size: 20px; width: 24px; margin-right: 16px; opacity: .7; }
+        .settings-btn { background: none; border: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #262626; font-size: 18px; transition: all .2s; padding: 5px; border-radius: 50%; }
+        body.dark-mode .settings-btn { color: white; }
+        .settings-btn:hover { background: rgba(0,0,0,.1); transform: rotate(90deg); }
+        body.dark-mode .settings-btn:hover { background: rgba(255,255,255,.1); }
+        .close-settings { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; color: #999; cursor: pointer; padding: 5px; border-radius: 50%; }
+        body.dark-mode .close-settings { color: #ccc; }
+        .theme-toggle-settings { justify-content: space-between; }
+        .theme-status { font-size: 14px; color: #666; }
+body.dark-mode .theme-status { color: #ccc; }
+
+/* Switch Toggle */
+.switch { position: relative; display: inline-block; width: 42px; height: 22px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 22px; }
+.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
+input:checked + .slider { background-color: #667eea; }
+input:checked + .slider:before { transform: translateX(20px); }
     </style>
 </head>
-
 <body>
-    <header>
-        <div class="container">
-            <nav class="navbar">
-                <div class="logo">🔗 ConnectX</div>
-                <ul class="nav-links">
-                    {% if user.is_authenticated %}
-                    <li><a href="{% url 'feed' %}"><i class="fas fa-home"></i> Feed</a></li>
-                    <li><a href="{% url 'analytics_dashboard' %}"><i class="fas fa-chart-bar"></i> Analytics</a></li>
-                    <li><a href="{% url 'create_post' %}"><i class="fas fa-plus"></i> Post</a></li>
-                    <div class="user-info">
-                        <p>👤 {{ user.username }}</p>
-                        <a href="{% url 'logout' %}" class="btn btn-danger btn-small">Logout</a>
-                        <button onclick="toggleTheme()" class="btn btn-secondary btn-small">
-                            🌙
-                        </button>
-                    </div>
-                    {% else %}
-                    <li><a href="{% url 'login' %}" class="btn btn-primary">Login</a></li>
-                    <li><a href="{% url 'register' %}" class="btn btn-secondary">Register</a></li>
-                    {% endif %}
-                </ul>
-            </nav>
-        </div>
+    <!-- Top Header -->
+    <header class="top-header">
+        <a href="javascript:history.back()" class="back-btn">
+            <i class="fas fa-chevron-left"></i>
+        </a>
+        <h1 class="logo">ConnectX</h1>
+        <button onclick="openSettings()" class="settings-btn" title="Settings">
+            <i class="fas fa-cog"></i>
+        </button>
     </header>
 
+    <!-- Main Content -->
     <main>
-        <div class="container">
-            {% if messages %}
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-            {% endfor %}
-            {% endif %}
-
-            {% block content %}{% endblock %}
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert" style="background: #e7f3ff; color: #0066cc; padding: 12px; border-radius: 8px; margin: 10px; border-left: 4px solid #0095f6;">
+            {{ message }}
         </div>
+        {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
     </main>
 
+    <!-- Bottom Nav - Auth Users Only -->
+    {% if user.is_authenticated %}
+    <nav class="bottom-nav">
+        <a href="{% url 'feed' %}" class="nav-item nav-home">
+            <i class="fas fa-house"></i>
+            <span>Home</span>
+        </a>
+        <a href="{% url 'analytics_dashboard' %}" class="nav-item nav-analytics">
+            <i class="fas fa-chart-line"></i>
+            <span>Analytics</span>
+        </a>
+        <a href="{% url 'create_post' %}" class="nav-item nav-create">
+            <i class="fas fa-plus"></i>
+        </a>
+        <a href="{% url 'profile' %}" class="nav-item nav-profile">
+            <i class="far fa-user"></i>
+            <span>Profile</span>
+        </a>
+    </nav>
+    {% endif %}
+
+    <div class="settings-modal" id="globalSettingsModal">
+        <div class="settings-panel">
+            <button class="close-settings" onclick="closeSettings()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="settings-header">
+                <h3>Settings</h3>
+            </div>
+            <ul class="settings-list">
+<li class="settings-item theme-toggle-settings" onclick="toggleTheme()">
+                <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+                    <div style="display:flex; align-items:center; gap: 12px;">
+                        <i class="fas fa-moon"></i>
+                        <span>Theme</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="themeSwitch">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </li>
+                <a href="{% url 'edit_profile' %}" onclick="closeSettings()" class="settings-item">
+                    <i class="fas fa-user-edit"></i>
+                    <span>Edit Profile</span>
+                </a>
+
+                <a href="{% url 'help' %}" onclick="closeSettings()" class="settings-item">
+                    <i class="fas fa-question-circle"></i>
+                    <span>Help</span>
+                </a>
+
+                <a href="{% url 'logout' %}" onclick="closeSettings()" class="settings-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+
+            </ul>
+        </div>
+    </div>
+
     <script>
-        // CSRF token for AJAX requests
+// Theme Toggle with Switch
+const themeSwitch = document.getElementById('themeSwitch');
+if (themeSwitch) {
+    themeSwitch.addEventListener('change', () => toggleTheme());
+}
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const theme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+            localStorage.setItem('theme', theme);
+            const moonIcon = document.querySelector('.theme-toggle-settings i');
+            if (moonIcon) {
+                moonIcon.classList.toggle('fa-moon');
+                moonIcon.classList.toggle('fa-sun');
+            }
+            updateThemeStatus();
+        }
+
+        function openSettings() {
+            document.getElementById('globalSettingsModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeSettings() {
+            document.getElementById('globalSettingsModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function updateThemeStatus() {
+            const themeStatus = document.getElementById('themeStatus');
+            if (themeStatus && document.body.classList.contains('dark-mode')) {
+                themeStatus.textContent = 'Dark';
+            } else if (themeStatus) {
+                themeStatus.textContent = 'Light';
+            }
+        }
+
+// Load theme
+        const savedTheme = localStorage.getItem('theme');
+        if(savedTheme === 'dark') { 
+            document.body.classList.add('dark-mode');
+            if(themeSwitch) themeSwitch.checked = true;
+        }
+        updateThemeStatus();
+
+        // Active nav
+        const currentPath = window.location.pathname;
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => {
+            const href = item.getAttribute('href');
+            if (href && currentPath.startsWith(href)) {
+                item.classList.add('active');
+            }
+        });
+
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
@@ -532,28 +246,18 @@
             return cookieValue;
         }
 
-        const csrftoken = getCookie('csrftoken');
-        function toggleTheme() {
-            document.body.classList.toggle("dark-mode");
+        // Modal interactions
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('globalSettingsModal');
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) closeSettings();
+            });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') closeSettings();
+            });
+        });
 
-            if (document.body.classList.contains("dark-mode")) {
-                localStorage.setItem("theme", "dark");
-            } else {
-                localStorage.setItem("theme", "light");
-            }
-        }
-
-        // Load saved theme
-        window.onload = function () {
-            const savedTheme = localStorage.getItem("theme");
-
-            if (savedTheme === "dark") {
-                document.body.classList.add("dark-mode");
-            }
-        }
-
-        {% block extra_js %} {% endblock %}
+        {% block extra_js %}{% endblock %}
     </script>
 </body>
-
 </html>

@@ -18,6 +18,7 @@ class Post(models.Model):
 
     is_toxic = models.BooleanField(default=False)
     toxic_score = models.FloatField(default=0.0)
+    originally_toxic = models.BooleanField(default=False)  # NEW FIELD
 
     class Meta:
         ordering = ['-created_at']
@@ -29,11 +30,9 @@ class Post(models.Model):
         return self.likes.count()
 
     def save(self, *args, **kwargs):
-        if self.content:
-            result = process_user_post(self.content)
-            self.safer_content = result['safer_text']
-            self.is_toxic = result['is_toxic']
-            self.toxic_score = result['toxicity_score']
+        # Make is_toxic True if originally_toxic is True
+        if self.originally_toxic:
+            self.is_toxic = True
         super().save(*args, **kwargs)
 
 
@@ -44,12 +43,21 @@ class Comment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_toxic = models.BooleanField(default=False)
     toxic_score = models.FloatField(default=0.0)
+    originally_toxic = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['created_at']
 
     def __str__(self):
         return f"Comment by {self.author.username} on {self.post}"
+
+    def save(self, *args, **kwargs):
+        if self.content:
+            result = process_user_post(self.content)
+            self.is_toxic = result['is_toxic']
+            self.toxic_score = result['toxicity_score']
+            self.originally_toxic = result['is_toxic']
+        super().save(*args, **kwargs)
 
 
 class ContentAnalytics(models.Model):
@@ -67,12 +75,14 @@ class ContentAnalytics(models.Model):
     def __str__(self):
         return f"Analytics for {self.date}"
 
+
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     following = models.ManyToManyField(User, related_name="followers", blank=True)
 
     def __str__(self):
         return self.user.username
+
 
 class Notification(models.Model):
     receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
@@ -86,3 +96,4 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.sender.username} -> {self.receiver.username}: {self.message}"
+

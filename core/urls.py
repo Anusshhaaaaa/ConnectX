@@ -11,16 +11,18 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('register/', views.register_view, name='register'),
     path('feed/', views.feed, name='feed'),
+    path('profile/', views.profile_view, name='profile'),
     path('post/', views.create_post, name='create_post'),
     path('post/<int:post_id>/delete/', views.delete_post, name='delete_post'),
     path('post/<int:post_id>/like/', views.like_post, name='like_post'),
     path('dashboard/', views.analytics_dashboard, name='analytics_dashboard'),
     path('api/check-toxic/', views.check_toxic, name='check_toxic'),
     path('comment/<int:post_id>/', views.add_comment, name='add_comment'),
-    path('follow/<int:user_id>/', views.follow_user, name='follow_user'),
-    path('unfollow/<int:user_id>/', views.unfollow_user, name='unfollow_user'),
-    path('discover/', views.discover_users, name='discover_users'),
 
+
+
+    path('edit_profile/', views.edit_profile, name='edit_profile'),
+    path('help/', views.help_page, name='help'),
 ]
 
 # Serve media files in development

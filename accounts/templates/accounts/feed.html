@@ -5,110 +5,52 @@
 {% block extra_css %}
 <style>
     .feed-container {
-        max-width: 600px;
-        margin: 0 auto;
-    }
-
-    .create-post-box {
-        background: white;
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px;
-    }
-
-    .create-post-box textarea {
         width: 100%;
-        padding: 15px;
-        border: 2px solid #f0f0f0;
-        border-radius: 10px;
-        font-size: 16px;
-        font-family: inherit;
-        resize: vertical;
-        min-height: 100px;
     }
-
-    .post-actions {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 15px;
-    }
-
-    .btn-share {
-        padding: 10px 30px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+    .instagram-follow {
+        background: #0095f6 !important;
+        color: white !important;
         border: none;
-        border-radius: 25px;
-        cursor: pointer;
+        border-radius: 5px;
+        padding: 6px 12px;
         font-weight: 600;
+        font-size: 12px;
+        min-width: 70px;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    .instagram-follow:hover {
+        background: #007bb5 !important;
+        transform: translateY(-1px);
+    }
+    .instagram-follow.following {
+        background: #efefef !important;
+        color: #262626 !important;
+    }
+    .instagram-follow.following:hover {
+        background: #ed4956 !important;
+        color: white !important;
+    }
+    .instagram-follow.unfollow-hover {
+        background: #ed4956 !important;
+        color: white !important;
+    }
+    .instagram-follow i {
+        margin-right: 4px;
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="feed-container">
-    <!-- Create Post Box -->
-    <div class="create-post-box">
-        <p style="font-weight: 600; margin-bottom: 15px; color: #333;">💭 What's on your mind?</p>
-        <form method="POST" action="{% url 'create_post' %}" enctype="multipart/form-data">
-            {% csrf_token %}
-            <textarea name="content" placeholder="Share your thoughts, ideas, or updates..." required></textarea>
-
-            <div class="post-actions">
-                <div>
-                    <label for="image-upload" style="cursor: pointer; color: #667eea; font-weight: 600;">
-                        <i class="fas fa-image"></i> Add Image
-                    </label>
-                    <input type="file" id="image-upload" name="image" accept="image/*" style="display: none;">
-                </div>
-                <button type="submit" class="btn-share">
-                    <i class="fas fa-paper-plane"></i> Post
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <!-- Filters -->
-    <div style="margin-bottom: 20px;">
-        <div class="search-box">
-            <form method="GET" style="display: flex; gap: 10px; width: 100%;">
-                <input type="text" name="search" placeholder="Search posts..." value="{{ search_query }}"
-                    style="flex: 1;">
-                <button type="submit" class="btn btn-primary" style="padding: 10px 20px;">
-                    <i class="fas fa-search"></i>
-                </button>
-            </form>
-        </div>
-        <div class="filter-buttons">
-            <form method="GET" style="display: flex; gap: 10px;">
-                <input type="hidden" name="search" value="{{ search_query }}">
-                <button type="submit" name="type" value=""
-                    class="filter-btn {% if not content_type %}active{% endif %}">
-                    All Posts
-                </button>
-                <button type="submit" name="type" value="text"
-                    class="filter-btn {% if content_type == 'text' %}active{% endif %}">
-                    Text Only
-                </button>
-                <button type="submit" name="type" value="image"
-                    class="filter-btn {% if content_type == 'image' %}active{% endif %}">
-                    Images
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Posts Feed -->
+    <!-- Posts Feed Only - Create moved to nav -->
     {% if posts %}
     {% for post in posts %}
     <div class="post-card">
         <!-- Post Header -->
         <div class="post-header">
             <div class="post-author">
-                <div
-                    style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
                     {{ post.author.username.0|upper }}
                 </div>
                 <div class="post-author-info">
@@ -118,22 +60,18 @@
                     </div>
                 </div>
             </div>
-            <!-- 🔥 ADD FOLLOW BUTTON HERE -->
-            {% if post.author != request.user %}
-            {% if post.author in request.user.profile.following.all %}
-            <a href="{% url 'unfollow_user' post.author.id %}" class="btn btn-small">
-                Unfollow
-            </a>
-            {% else %}
-            <a href="{% url 'follow_user' post.author.id %}" class="btn btn-small">
-                Follow
-            </a>
+            <!-- Follow Toggle Button -->
+            {% if post.author != user %}
+            <button class="follow-btn instagram-follow" data-user="{{ post.author.id }}" data-following="{% if post.author in user.profile.following.all %}true{% else %}false{% endif %}" id="follow-btn-{{ post.author.id }}">
+                {% if post.author in user.profile.following.all %}
+                <i class="fas fa-check"></i> Following
+                {% else %}
+                <i class="fas fa-plus"></i> Follow
+                {% endif %}
+            </button>
             {% endif %}
-            {% endif %}
-            <!-- 🔥 END FOLLOW BUTTON -->
             {% if post.author == user %}
-            <a href="{% url 'delete_post' post.id %}" class="btn btn-danger btn-small"
-                onclick="return confirm('Delete this post?');">
+            <a href="{% url 'delete_post' post.id %}" class="btn btn-danger btn-small" onclick="return confirm('Delete this post?');">
                 <i class="fas fa-trash"></i>
             </a>
             {% endif %}
@@ -145,8 +83,7 @@
             <div class="icon">⚠️</div>
             <div class="toxic-warning-text">
                 <p><strong>⚠️ Toxic Content Detected</strong></p>
-                <p>This post contains potentially harmful language. Please consider rephrasing for a more respectful
-                    community.</p>
+                <p>This post contains potentially harmful language. Please consider rephrasing for a more respectful community.</p>
                 <p><small>Toxicity Score: {{ post.toxic_score|floatformat:2 }}%</small></p>
             </div>
         </div>
@@ -155,7 +92,7 @@
         <!-- Post Body -->
         <div class="post-body">
             <div class="post-content">
-                {{ post.content }}
+                {{ post.safer_content|default:post.content }}
             </div>
             {% if post.image %}
             <img src="{{ post.image.url }}" alt="Post image" class="post-image">
@@ -180,24 +117,16 @@
             </div>
         </div>
 
-        <!-- ================= COMMENT SECTION ================= -->
-
+        <!-- Comment Section -->
         <div style="padding: 15px; border-top: 1px solid #f0f0f0;">
-
-            <!-- Comment Form -->
-            <form method="POST" action="{% url 'add_comment' post.id %}"
-                style="display: flex; gap: 10px; margin-bottom: 12px;">
+            <form method="POST" action="{% url 'add_comment' post.id %}" style="display: flex; gap: 10px; margin-bottom: 12px;">
                 {% csrf_token %}
-                <input type="text" name="content" placeholder="Write a comment..."
-                    style="flex: 1; padding: 8px 12px; border-radius: 20px; border: 1px solid #ddd;" required>
-                <button type="submit"
-                    style="padding: 8px 15px; border-radius: 20px; border: none; background: #667eea; color: white;">
+                <input type="text" name="content" placeholder="Write a comment..." style="flex: 1; padding: 8px 12px; border-radius: 20px; border: 1px solid #ddd;" required>
+                <button type="submit" style="padding: 8px 15px; border-radius: 20px; border: none; background: #667eea; color: white;">
                     Post
                 </button>
             </form>
 
-            <!-- Comment List -->
-            <!-- Comment List -->
             {% for comment in post.comments.all %}
             <div class="comment-box {% if comment.is_toxic %}toxic-comment{% endif %}">
                 <strong>{{ comment.author.username }}</strong>
@@ -209,16 +138,12 @@
                 {{ comment.content }}
                 {% endif %}
             </div>
-
             {% empty %}
             <div class="no-comments">
                 No comments yet.
             </div>
             {% endfor %}
-
-
         </div>
-
     </div>
     {% endfor %}
     {% else %}
@@ -232,13 +157,53 @@
 
 {% block extra_js %}
 <script>
-    // Handle image upload preview
-    document.getElementById('image-upload').addEventListener('change', function (e) {
-        const file = this.files[0];
-        if (file) {
-            const label = document.querySelector('label[for="image-upload"]');
-            label.textContent = '✓ ' + file.name;
+// Follow toggle functionality (Instagram style)
+document.querySelectorAll('.follow-btn').forEach(btn => {
+    btn.addEventListener('mouseenter', function() {
+        if (this.dataset.following === "true") {
+            this.innerHTML = '<i class="fas fa-user"></i> Unfollow';
+            this.classList.add("unfollow-hover");
         }
     });
+
+    btn.addEventListener('mouseleave', function() {
+        if (this.dataset.following === "true") {
+            this.innerHTML = '<i class="fas fa-check"></i> Following';
+            this.classList.remove("unfollow-hover");
+        }
+    });
+
+    btn.addEventListener('click', async function(e) {
+        e.preventDefault();
+        const userId = this.dataset.user;
+        const isFollowing = this.dataset.following === "true";
+
+        const url = isFollowing
+            ? `/unfollow/${userId}/`
+            : `/follow/${userId}/`;
+
+        const response = await fetch(url);
+
+        if (response.ok) {
+            if (isFollowing) {
+                this.innerHTML = '<i class="fas fa-plus"></i> Follow';
+                this.classList.remove("following", "unfollow-hover");
+                this.dataset.following = "false";
+            } else {
+                this.innerHTML = '<i class="fas fa-check"></i> Following';
+                this.classList.add("following");
+                this.dataset.following = "true";
+            }
+
+            // animation
+            this.style.transform = "scale(0.95)";
+            setTimeout(() => {
+                this.style.transform = "scale(1)";
+            }, 150);
+        }
+    });
+});
+
+
 </script>
 {% endblock %}

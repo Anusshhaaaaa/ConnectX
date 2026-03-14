@@ -4,323 +4,277 @@
 
 {% block extra_css %}
 <style>
-    .dashboard-container {
-        max-width: 1200px;
-        margin: 0 auto;
-    }
+.dashboard-container {
+    width: 100%;
+    padding: 0 20px;
+}
 
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 20px;
-        margin-bottom: 30px;
-    }
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
 
-    .stat-card {
-        background: white;
-        padding: 25px;
-        border-radius: 15px;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-        text-align: center;
-        transition: transform 0.3s;
-    }
+.stat-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    text-align: center;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.12);
+}
 
-    .stat-card:hover {
-        transform: translateY(-5px);
-    }
+.stat-card.safe { border-top: 4px solid #51cf66; }
+.stat-card.toxic { border-top: 4px solid #ff6b6b; }
+.stat-card.neutral { border-top: 4px solid #667eea; }
 
-    .stat-card.toxic {
-        border-top: 4px solid #ff6b6b;
-    }
+.stat-number {
+    font-size: 36px;
+    font-weight: 700;
+    color: #333;
+    margin: 10px 0;
+}
 
-    .stat-card.safe {
-        border-top: 4px solid #51cf66;
-    }
+.stat-label {
+    font-size: 14px;
+    color: #666;
+}
 
-    .stat-card.neutral {
-        border-top: 4px solid #667eea;
-    }
+.percentage-badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 8px;
+}
+.percentage-badge.success { background: #e8f5e9; color: #2e7d32; }
+.percentage-badge.danger { background: #ffebee; color: #c62828; }
 
-    .stat-number {
-        font-size: 36px;
-        font-weight: bold;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
+.chart-container {
+    background: #fff;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    margin-bottom: 30px;
+}
 
-    .stat-label {
-        color: #666;
-        font-size: 14px;
-        margin-top: 10px;
-    }
+.chart-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 20px;
+}
 
-    .percentage-badge {
-        display: inline-block;
-        padding: 5px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-        margin-top: 10px;
-    }
+.content-types {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin-top: 10px;
+}
 
-    .percentage-badge.success {
-        background: #e8f5e9;
-        color: #2e7d32;
-    }
+.content-type-card {
+    background: #f9f9f9;
+    border-left: 4px solid #667eea;
+    border-radius: 10px;
+    padding: 12px 15px;
+    text-align: center;
+}
 
-    .percentage-badge.danger {
-        background: #ffebee;
-        color: #c62828;
-    }
+.content-type-card h4 {
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 5px;
+}
 
-    .chart-container {
-        background: white;
-        padding: 25px;
-        border-radius: 15px;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-        margin-bottom: 30px;
-    }
+.content-type-card .count {
+    font-size: 22px;
+    font-weight: 600;
+    color: #667eea;
+}
 
-    .chart-title {
-        font-size: 18px;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 20px;
-    }
+.top-users {
+    background: #fff;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
 
-    .pie-chart {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 300px;
-    }
+.user-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+.user-item:last-child { border-bottom: none; }
 
-    .content-types {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 15px;
-        margin-top: 20px;
-    }
+.user-item .rank {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
 
-    .content-type-card {
-        background: #f9f9f9;
-        padding: 15px;
-        border-radius: 10px;
-        border-left: 4px solid #667eea;
-    }
+.user-item .name { flex: 1; margin-left: 12px; font-weight: 500; color: #333; }
+.user-item .count { font-weight: bold; color: #667eea; }
 
-    .content-type-card h4 {
-        margin: 0 0 8px 0;
-        color: #333;
-        font-size: 14px;
-    }
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #f0f0f0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 6px;
+}
+.progress-fill.safe { background: linear-gradient(90deg, #51cf66, #40c057); height: 100%; border-radius: 10px; transition: width 0.3s; }
+.progress-fill.toxic { background: linear-gradient(90deg, #ff6b6b, #fa5252); height: 100%; border-radius: 10px; transition: width 0.3s; }
 
-    .content-type-card .count {
-        font-size: 24px;
-        font-weight: bold;
-        color: #667eea;
-    }
-
-    .top-users {
-        background: white;
-        padding: 25px;
-        border-radius: 15px;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-    }
-
-    .user-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px 0;
-        border-bottom: 1px solid #f0f0f0;
-    }
-
-    .user-item:last-child {
-        border-bottom: none;
-    }
-
-    .user-item .rank {
-        width: 30px;
-        height: 30px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        font-size: 14px;
-    }
-
-    .user-item .name {
-        flex: 1;
-        margin-left: 15px;
-        font-weight: 500;
-    }
-
-    .user-item .count {
-        font-weight: bold;
-        color: #667eea;
-    }
-
-    .progress-bar {
-        width: 100%;
-        height: 8px;
-        background: #f0f0f0;
-        border-radius: 10px;
-        overflow: hidden;
-        margin-top: 10px;
-    }
-
-    .progress-fill {
-        height: 100%;
-        border-radius: 10px;
-        transition: width 0.3s;
-    }
-
-    .progress-fill.safe {
-        background: linear-gradient(90deg, #51cf66 0%, #40c057 100%);
-    }
-
-    .progress-fill.toxic {
-        background: linear-gradient(90deg, #ff6b6b 0%, #fa5252 100%);
-    }
-
-    .date-range {
-        background: white;
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        font-size: 14px;
-        color: #666;
-    }
+.date-range {
+    background: #fff;
+    padding: 12px 15px;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #666;
+}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="dashboard-container">
+
+    <!-- Header -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-        <h1 style="margin: 0; color: #333;">
-            <i class="fas fa-chart-bar"></i> Analytics Dashboard
-        </h1>
-        <div class="date-range">
-            📅 Last 30 days analysis
-        </div>
+        <h1 style="margin:0; color:#333;"><i class="fas fa-chart-bar"></i> Analytics Dashboard</h1>
+        <div class="date-range">📅 Last 30 days</div>
     </div>
 
-    <!-- Main Stats Grid -->
+    <!-- Posts Stats -->
+    <h2 style="color: #333; margin-bottom: 20px; border-bottom: 3px solid #667eea; padding-bottom:10px;">📊 Posts</h2>
     <div class="stats-grid">
-        <!-- Total Posts -->
         <div class="stat-card neutral">
-            <div style="font-size: 32px; margin-bottom: 10px;">📊</div>
+            <div style="font-size:28px;">📊</div>
             <div class="stat-number">{{ total_posts }}</div>
             <div class="stat-label">Total Posts</div>
         </div>
-
-        <!-- Safe Posts -->
         <div class="stat-card safe">
-            <div style="font-size: 32px; margin-bottom: 10px;">✓</div>
+            <div style="font-size:28px;">✓</div>
             <div class="stat-number">{{ safe_posts }}</div>
             <div class="stat-label">Safe Posts</div>
-            <div class="percentage-badge success">{{ safe_percentage }}%</div>
+            <div class="percentage-badge success">{{ safe_pct_posts|floatformat:1 }}%</div>
         </div>
-
-        <!-- Toxic Posts -->
         <div class="stat-card toxic">
-            <div style="font-size: 32px; margin-bottom: 10px;">⚠️</div>
+            <div style="font-size:28px;">⚠️</div>
             <div class="stat-number">{{ toxic_posts }}</div>
-            <div class="stat-label">Toxic Posts</div>
-            <div class="percentage-badge danger">{{ toxic_percentage }}%</div>
+            <div class="stat-label">Final Toxic</div>
+            <div class="percentage-badge danger">{{ toxic_pct_posts|floatformat:1 }}%</div>
         </div>
-
-        <!-- Avg Toxic Score -->
         <div class="stat-card neutral">
-            <div style="font-size: 32px; margin-bottom: 10px;">🔍</div>
-            <div class="stat-number">{{ avg_toxic_score }}</div>
+            <div style="font-size:28px;">🔍</div>
+            <div class="stat-number">{{ avg_toxic_posts }}</div>
             <div class="stat-label">Avg Toxicity Score</div>
         </div>
     </div>
 
-    <!-- Content Type Distribution -->
+        <!-- Content Type Distribution -->
     <div class="chart-container">
-        <div class="chart-title">📈 Content Type Distribution</div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-            <div class="content-types">
-                <div class="content-type-card">
-                    <h4>📝 Text Posts</h4>
-                    <div class="count">{{ text_posts }}</div>
-                    <div class="progress-bar" style="margin-top: 8px;">
-                        <div class="progress-fill safe" style="width: {% widthratio text_posts total_posts 100 %}%"></div>
-                    </div>
-                </div>
-                <div class="content-type-card">
-                    <h4>🖼️ Image Posts</h4>
-                    <div class="count">{{ image_posts }}</div>
-                    <div class="progress-bar" style="margin-top: 8px;">
-                        <div class="progress-fill safe" style="width: {% widthratio image_posts total_posts 100 %}%"></div>
-                    </div>
-                </div>
+        <div class="chart-title">📈 Posts Content Type Distribution</div>
+        <div class="content-types">
+            <div class="content-type-card">
+                <h4>📝 Text Posts</h4>
+                <div class="count">{{ text_posts }}</div>
+                <div class="progress-bar"><div class="progress-fill safe" style="width: {% widthratio text_posts total_posts 100 %}%"></div></div>
             </div>
-            <div style="display: flex; align-items: center; justify-content: center;">
-                <svg width="250" height="250" style="margin: 0 auto;">
-                    <!-- Safe Posts Pie -->
-                    <circle cx="125" cy="125" r="100" fill="#51cf66" opacity="0.8"></circle>
-                    <!-- Toxic Posts Pie -->
-                    <circle cx="125" cy="125" r="100" fill="#ff6b6b" opacity="0.8" 
-                            stroke="#f0f0f0" stroke-width="2"
-                            stroke-dasharray="{% widthratio toxic_posts total_posts 628 %} 628"
-                            transform="rotate(-90 125 125)"></circle>
-                    <text x="125" y="130" font-size="24" font-weight="bold" text-anchor="middle" fill="#fff">
-                        {{ safe_percentage }}%
-                    </text>
-                    <text x="125" y="155" font-size="12" text-anchor="middle" fill="#fff">
-                        Safe
-                    </text>
-                </svg>
+            <div class="content-type-card">
+                <h4>🖼️ Image Posts</h4>
+                <div class="count">{{ image_posts }}</div>
+                <div class="progress-bar"><div class="progress-fill safe" style="width: {% widthratio image_posts total_posts 100 %}%"></div></div>
             </div>
         </div>
     </div>
 
-    <!-- Safety Health Check -->
-    <div class="chart-container">
-        <div class="chart-title">🏥 Community Health Check</div>
-        <div style="margin-top: 20px;">
-            <div style="margin-bottom: 20px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span style="font-weight: 500;">Platform Safety Score</span>
-                    <span style="font-weight: bold; color: #51cf66;">{{ safe_percentage }}%</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill safe" style="width: {{ safe_percentage }}%;"></div>
-                </div>
-                <p style="margin: 8px 0 0 0; font-size: 12px; color: #999;">
-                    Higher scores indicate more respectful and safe community interactions.
-                </p>
-            </div>
-
-            <div style="margin-top: 20px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span style="font-weight: 500;">Content Requiring Attention</span>
-                    <span style="font-weight: bold; color: #ff6b6b;">{{ toxic_percentage }}%</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill toxic" style="width: {{ toxic_percentage }}%;"></div>
-                </div>
-                <p style="margin: 8px 0 0 0; font-size: 12px; color: #999;">
-                    Posts that contain potentially harmful or disrespectful language.
-                </p>
-            </div>
+    <!-- Comments Stats -->
+    <h2 style="color: #333; margin-bottom: 20px; border-bottom: 3px solid #51cf66; padding-bottom:10px;">💬 Comments</h2>
+    <div class="stats-grid">
+        <div class="stat-card neutral">
+            <div style="font-size:28px;">💬</div>
+            <div class="stat-number">{{ total_comments }}</div>
+            <div class="stat-label">Total Comments</div>
+        </div>
+        <div class="stat-card safe">
+            <div style="font-size:28px;">✓</div>
+            <div class="stat-number">{{ safe_comments }}</div>
+            <div class="stat-label">Safe Comments</div>
+            <div class="percentage-badge success">{{ safe_pct_comments|floatformat:1 }}%</div>
+        </div>
+        <div class="stat-card toxic">
+            <div style="font-size:28px;">⚠️</div>
+            <div class="stat-number">{{ toxic_comments }}</div>
+            <div class="stat-label">Final Toxic</div>
+            <div class="percentage-badge danger">{{ toxic_pct_comments|floatformat:1 }}%</div>
+        </div>
+        <div class="stat-card neutral">
+            <div style="font-size:28px;">🔍</div>
+            <div class="stat-number">{{ avg_toxic_comments }}</div>
+            <div class="stat-label">Avg Toxicity Score</div>
         </div>
     </div>
 
-    <!-- Top Contributors -->
-    {% if top_users %}
-    <div class="top-users" style="margin-top: 30px;">
-        <div class="chart-title">👥 Top Contributors</div>
-        {% for user in top_users %}
+    <!-- Comments Content Type Distribution & Mini Pie Chart -->
+<div class="chart-container">
+    <div class="chart-title">📈 Comments Safety Distribution</div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: center;">
+        <!-- Comment Stats Bars -->
+        <div class="content-types">
+            <div class="content-type-card">
+                <h4>✓ Safe Comments</h4>
+                <div class="count">{{ safe_comments }}</div>
+                <div class="progress-bar">
+                    <div class="progress-fill safe" style="width: {% widthratio safe_comments total_comments 100 %}%"></div>
+                </div>
+            </div>
+            <div class="content-type-card">
+                <h4>⚠️ Final Toxic</h4>
+                <div class="count">{{ toxic_comments }}</div>
+                <div class="progress-bar">
+                    <div class="progress-fill toxic" style="width: {% widthratio toxic_comments total_comments 100 %}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mini Pie Chart -->
+        <div style="display: flex; align-items: center; justify-content: center;">
+            <svg width="200" height="200">
+                <circle cx="100" cy="100" r="80" fill="#51cf66" opacity="0.8"></circle>
+                <circle cx="100" cy="100" r="80" fill="#ff6b6b" opacity="0.8" 
+                        stroke="#f0f0f0" stroke-width="2"
+                        stroke-dasharray="{% widthratio toxic_comments total_comments 502 %} 502"
+                        transform="rotate(-90 100 100)"></circle>
+                <text x="100" y="105" font-size="22" font-weight="bold" text-anchor="middle" fill="#fff">
+                    {{ safe_pct_comments|floatformat:1 }}%
+                </text>
+                <text x="100" y="130" font-size="12" text-anchor="middle" fill="#fff">Safe</text>
+            </svg>
+        </div>
+    </div>
+</div>
+
+
+
+    <!-- Top Users -->
+    {% if top_posters %}
+    <div class="chart-container">
+        <div class="chart-title">👥 Top Posters</div>
+        {% for user in top_posters %}
             <div class="user-item">
                 <div class="rank">{{ forloop.counter }}</div>
                 <div class="name">{{ user.username }}</div>
@@ -330,45 +284,35 @@
     </div>
     {% endif %}
 
-    <!-- Key Insights -->
-    <div class="chart-container" style="margin-top: 30px; background: linear-gradient(135deg, #e8f5e9 0%, #f0f7ff 100%); border-left: 4px solid #51cf66;">
-        <div class="chart-title">💡 Key Insights</div>
-        <ul style="color: #333; line-height: 2; margin: 0; padding-left: 20px;">
-            {% if safe_percentage >= 90 %}
-                <li>✅ Excellent! Your community maintains a strong culture of respectful communication.</li>
-            {% elif safe_percentage >= 70 %}
-                <li>⚠️ Good progress! Continue encouraging respectful language and community guidelines.</li>
-            {% else %}
-                <li>🔴 Attention needed! Consider reviewing and enforcing community guidelines more actively.</li>
-            {% endif %}
-            <li>📊 Most popular content type: {% if image_posts >= text_posts %}🖼️ Images{% else %}📝 Text{% endif %}</li>
-            <li>👥 Community has {{ top_users.count }} active contributors shaping the platform.</li>
-            <li>🎯 Focus on creating an environment where users can express themselves respectfully.</li>
-        </ul>
+    {% if top_commenters %}
+    <div class="chart-container">
+        <div class="chart-title">👥 Top Commenters</div>
+        {% for user in top_commenters %}
+            <div class="user-item">
+                <div class="rank">{{ forloop.counter }}</div>
+                <div class="name">{{ user.username }}</div>
+                <div class="count">{{ user.comment_count }} comments</div>
+            </div>
+        {% endfor %}
     </div>
+    {% endif %}
+
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Animate numbers on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        const stats = document.querySelectorAll('.stat-number');
-        stats.forEach(stat => {
-            const target = parseInt(stat.textContent);
-            let current = 0;
-            const increment = target / 20;
-            
-            const timer = setInterval(() => {
-                current += increment;
-                if (current >= target) {
-                    stat.textContent = target;
-                    clearInterval(timer);
-                } else {
-                    stat.textContent = Math.floor(current);
-                }
-            }, 30);
-        });
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.stat-number').forEach(stat => {
+        const target = parseFloat(stat.textContent);
+        let current = 0;
+        const step = target / 20;
+        const interval = setInterval(() => {
+            current += step;
+            if(current >= target){ stat.textContent = target; clearInterval(interval); }
+            else stat.textContent = Math.floor(current);
+        }, 30);
     });
+});
 </script>
 {% endblock %}

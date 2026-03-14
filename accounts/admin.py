@@ -3,8 +3,8 @@ from .models import Post, Comment, ContentAnalytics
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ['author', 'created_at', 'is_toxic', 'toxic_score', 'like_count']
-    list_filter = ['is_toxic', 'created_at']
+    list_display = ['author', 'created_at', 'is_toxic', 'originally_toxic', 'toxic_score', 'like_count']
+    list_filter = ['is_toxic', 'originally_toxic', 'created_at']
     search_fields = ['author__username', 'content']
     readonly_fields = ['created_at', 'updated_at', 'toxic_score']
 
