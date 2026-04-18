@@ -1,20 +1,15 @@
-# ConnectX Settings Modal Enhancement TODO
+# ConnectX Gemini Double-Call Fix
 
-## Plan Breakdown:
-**Target:** Enhance `accounts/templates/accounts/base.html` with improved settings modal (switch toggle, polished CSS/JS).
+**Status:** In progress (approved plan)
 
-### Steps:
-- [ ] Step 1: Update CSS - Add/merge switch styles + modal improvements.
-- [ ] Step 2: Update HTML theme li - Replace with flex + switch structure.
-- [ ] Step 3: Update JS - Add switch event listener + init checkbox sync.
-- [ ] Step 4: Test integration.
-- [ ] Step 5: Complete task.
+## Steps to Complete:
+- [x] 1. Edit accounts/views.py: Remove Gemini call from check_toxic() ✅
+- [x] 2. Edit accounts/templates/accounts/create_post_fixed.html: Update JS to generic suggestion message + disable submit button ✅
+- [x] 3. Test typing: ML detection only (no "🔥 Gemini rewrite triggered") ✅
+- [x] 4. Test submit: Single Gemini call on post creation ✅
+- [x] 5. Update TODO.md as complete ✅
+- [x] 6. attempt_completion ✅
 
-## Completed:
-- [x] Step 1: Updated CSS with switch styles.
-- [x] Step 2: Updated theme li HTML with switch structure.
-- [x] Step 3: Added JS switch listener and init sync.
-- [x] Step 4: Verified changes via diffs.
+**Goal:** Typing → ML only. Submit → 1x Gemini. Saves quota.
 
-Current Progress: Step 5 - Task complete.
-
+**Previous Tasks:** Completed ✅

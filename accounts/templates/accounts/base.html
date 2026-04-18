@@ -6,6 +6,7 @@
     <title>{% block title %}ConnectX{% endblock %}</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Pacifico:wght@400&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #fafafa; min-height: 100vh; color: #262626; display: flex; flex-direction: column; overflow-x: hidden; }
@@ -53,34 +54,7 @@
     </style>
 
     <style>
-        /* Global Settings Modal */
-        .settings-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; backdrop-filter: blur(5px); animation: fadeIn 0.2s; }
-
-        .settings-modal.active { display: flex; align-items: center; justify-content: center; }
-        @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
-        .settings-panel { background: white; border-radius: 20px; width: 90%; max-width: 350px; max-height: 80vh; overflow-y: auto; transform: translateY(20px) scale(.95); animation: slideUp 0.3s forwards; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
-        @keyframes slideUp { to {transform: translateY(0) scale(1);} }
-        body.dark-mode .settings-panel { background: #1a1a1a; color: white; }
-        .settings-header { padding: 25px 20px; text-align: center; border-bottom: 1px solid #efefef; }
-        body.dark-mode .settings-header { border-bottom-color: #333; }
-        .settings-header h3 { font-size: 24px; font-weight: 600; margin: 0; }
-        .settings-list { list-style: none; padding: 0; margin: 0; }
-        .settings-item { display: flex; align-items: center; padding: 20px; border-bottom: 1px solid #efefef; cursor: pointer; transition: background .2s; }
-        body.dark-mode .settings-item { border-bottom-color: #333; }
-        .settings-item:hover { background: #f8f9fa; }
-        body.dark-mode .settings-item:hover { background: #262626; }
-        .settings-item i { font-size: 20px; width: 24px; margin-right: 16px; opacity: .7; }
-        .settings-btn { background: none; border: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #262626; font-size: 18px; transition: all .2s; padding: 5px; border-radius: 50%; }
-        body.dark-mode .settings-btn { color: white; }
-        .settings-btn:hover { background: rgba(0,0,0,.1); transform: rotate(90deg); }
-        body.dark-mode .settings-btn:hover { background: rgba(255,255,255,.1); }
-        .close-settings { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; color: #999; cursor: pointer; padding: 5px; border-radius: 50%; }
-        body.dark-mode .close-settings { color: #ccc; }
-        .theme-toggle-settings { justify-content: space-between; }
-        .theme-status { font-size: 14px; color: #666; }
-body.dark-mode .theme-status { color: #ccc; }
-
-/* Switch Toggle */
+/* Switch Toggle - kept for theme */
 .switch { position: relative; display: inline-block; width: 42px; height: 22px; }
 .switch input { opacity: 0; width: 0; height: 0; }
 .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 22px; }
@@ -96,9 +70,7 @@ input:checked + .slider:before { transform: translateX(20px); }
             <i class="fas fa-chevron-left"></i>
         </a>
         <h1 class="logo">ConnectX</h1>
-        <button onclick="openSettings()" class="settings-btn" title="Settings">
-            <i class="fas fa-cog"></i>
-        </button>
+
     </header>
 
     <!-- Main Content -->
@@ -135,100 +107,58 @@ input:checked + .slider:before { transform: translateX(20px); }
     </nav>
     {% endif %}
 
-    <div class="settings-modal" id="globalSettingsModal">
-        <div class="settings-panel">
-            <button class="close-settings" onclick="closeSettings()">
-                <i class="fas fa-times"></i>
-            </button>
-            <div class="settings-header">
-                <h3>Settings</h3>
-            </div>
-            <ul class="settings-list">
-<li class="settings-item theme-toggle-settings" onclick="toggleTheme()">
-                <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
-                    <div style="display:flex; align-items:center; gap: 12px;">
-                        <i class="fas fa-moon"></i>
-                        <span>Theme</span>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" id="themeSwitch">
-                        <span class="slider round"></span>
-                    </label>
-                </div>
-            </li>
-                <a href="{% url 'edit_profile' %}" onclick="closeSettings()" class="settings-item">
-                    <i class="fas fa-user-edit"></i>
-                    <span>Edit Profile</span>
-                </a>
 
-                <a href="{% url 'help' %}" onclick="closeSettings()" class="settings-item">
-                    <i class="fas fa-question-circle"></i>
-                    <span>Help</span>
-                </a>
 
-                <a href="{% url 'logout' %}" onclick="closeSettings()" class="settings-item">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Logout</span>
-                </a>
-
-            </ul>
-        </div>
-    </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-// Theme Toggle with Switch
-const themeSwitch = document.getElementById('themeSwitch');
-if (themeSwitch) {
-    themeSwitch.addEventListener('change', () => toggleTheme());
+function confirmDelete(postId, btn) {
+    const deleteUrl = "{% url 'delete_post' 0 %}".replace('0', postId);
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                icon: "success",
+                title: "Deleted!",
+                text: "Your post has been deleted.",
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => {
+                window.location.href = deleteUrl;
+            });
+        }
+    });
 }
 
-        function toggleTheme() {
-            document.body.classList.toggle('dark-mode');
-            const theme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
-            localStorage.setItem('theme', theme);
-            const moonIcon = document.querySelector('.theme-toggle-settings i');
-            if (moonIcon) {
-                moonIcon.classList.toggle('fa-moon');
-                moonIcon.classList.toggle('fa-sun');
-            }
-            updateThemeStatus();
-        }
-
-        function openSettings() {
-            document.getElementById('globalSettingsModal').classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-        function closeSettings() {
-            document.getElementById('globalSettingsModal').classList.remove('active');
-            document.body.style.overflow = '';
-        }
-
-        function updateThemeStatus() {
-            const themeStatus = document.getElementById('themeStatus');
-            if (themeStatus && document.body.classList.contains('dark-mode')) {
-                themeStatus.textContent = 'Dark';
-            } else if (themeStatus) {
-                themeStatus.textContent = 'Light';
-            }
-        }
+// Theme Toggle
+function toggleTheme() {
+    document.body.classList.toggle('dark-mode');
+    const theme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+    localStorage.setItem('theme', theme);
+}
 
 // Load theme
-        const savedTheme = localStorage.getItem('theme');
-        if(savedTheme === 'dark') { 
-            document.body.classList.add('dark-mode');
-            if(themeSwitch) themeSwitch.checked = true;
-        }
-        updateThemeStatus();
+const savedTheme = localStorage.getItem('theme');
+if(savedTheme === 'dark') {
+    document.body.classList.add('dark-mode');
+}
 
-        // Active nav
-        const currentPath = window.location.pathname;
-        const navItems = document.querySelectorAll('.nav-item');
-        navItems.forEach(item => {
-            const href = item.getAttribute('href');
-            if (href && currentPath.startsWith(href)) {
-                item.classList.add('active');
-            }
-        });
+// Active nav
+const currentPath = window.location.pathname;
+const navItems = document.querySelectorAll('.nav-item');
+navItems.forEach(item => {
+    const href = item.getAttribute('href');
+    if (href && currentPath.startsWith(href)) {
+        item.classList.add('active');
+    }
+});
 
         const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
         function getCookie(name) {
@@ -245,19 +175,12 @@ if (themeSwitch) {
             }
             return cookieValue;
         }
-
-        // Modal interactions
-        document.addEventListener('DOMContentLoaded', function() {
-            const modal = document.getElementById('globalSettingsModal');
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) closeSettings();
-            });
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') closeSettings();
-            });
-        });
-
-        {% block extra_js %}{% endblock %}
     </script>
+
+    {% block extra_js %}{% endblock %}
+
 </body>
-</html>
+</html> 
+
+
+
