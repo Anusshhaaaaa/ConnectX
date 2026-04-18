@@ -18,10 +18,10 @@ from .utils import detect_toxic_content, get_safer_alternative, analyze_image_to
 # KEYWORD OVERRIDE LAYER
 # ============================================
 
-TOXIC_THRESHOLD = 0.5
+import re
 
 hard_block_words = ["idiot", "stupid", "moron", "kill","nonsense",]
-soft_boost_words = ["trash", "ridiculous", "useless"]
+soft_boost_words = ["trash", "ridiculous", "useless", "worthless", "disgusting"]
 safe_override_words = ["kill process", "execute command"]
 
 
@@ -37,17 +37,12 @@ def keyword_override_check(text):
             return "safe_override"
 
     for word in soft_boost_words:
-        insult_patterns = [
-            f"you are {word}",
-            f"u r {word}",
-            f"you're {word}",
-            f"ur {word}"
-        ]
-        for pattern in insult_patterns:
-            if pattern in text_lower:
-                return "soft_boost"
+        pattern = rf"\b(u|you|ur|you\'re)\s*(are|r)?\s*(a\s*)?{re.escape(word)}\b"
+        if re.search(pattern, text_lower):
+            return "soft_boost"
 
     return "none"
+
 
 
 # ============================================
@@ -212,8 +207,16 @@ def create_post(request):
                 toxic_score = 0
 
             elif override_result == "soft_boost":
-                is_toxic = True
                 toxic_score = max(toxic_score, 0.75)
+                is_toxic = toxic_score > 0.5
+
+        # IMAGE TOXICITY CHECK (BLOCKING)
+        if image:
+            image_result = analyze_image_toxicity(image)
+            if image_result["is_toxic"]:
+                return render(request, "accounts/create_post_fixed.html", {
+                    "error": image_result["reason"]
+                })
 
         # Step 2: Create post object
         post = Post.objects.create(
@@ -229,32 +232,19 @@ def create_post(request):
             post.safer_content = get_safer_alternative(content, is_toxic)
             post.save()  # triggers model logic: originally_toxic → is_toxic
 
-        # =========================
-        # IMAGE TOXICITY CHECK (WARNING ONLY)
-        # =========================
-        if image:
-            image_result = analyze_image_toxicity(image)
-            if image_result.get("is_toxic"):
-                # Log warning but save anyway
-                post.toxic_score = max(post.toxic_score, 0.8)
-                post.save()
+
 
         update_analytics()
-        return redirect('feed')
+        return redirect('profile')
 
     return render(request, 'accounts/create_post_fixed.html', {})
 
 
 @login_required(login_url='login')
 def delete_post(request, post_id):
-    post = get_object_or_404(Post, id=post_id)
-
-    if post.author != request.user:
-        return redirect('feed')
-
+    post = get_object_or_404(Post, id=post_id, author=request.user)
     post.delete()
-    update_analytics()
-    return redirect('feed')
+    return redirect('profile')
 
 
 @login_required(login_url='login')
@@ -296,8 +286,8 @@ def add_comment(request, post_id):
         toxic_score = 0
 
     elif override_result == "soft_boost":
-        is_toxic = True
         toxic_score = max(toxic_score, 0.75)
+        is_toxic = toxic_score > 0.5
 
     # =========================
     # CREATE COMMENT (NO BLOCKING)
@@ -423,9 +413,15 @@ def update_analytics():
 @login_required(login_url='login')
 @require_http_methods(["POST"])
 def check_toxic(request):
+    if not request.body:
+        return JsonResponse({"error": "Empty body"}, status=400)
+
     try:
-        data = json.loads(request.body)
-        content = data.get('content', '')
+        data = json.loads(request.body.decode("utf-8"))
+        content = data.get("content", "").strip()
+
+        if not content:
+            return JsonResponse({"error": "Empty content"}, status=400)
 
         is_toxic, toxic_score = detect_toxic_content(content)
         override_result = keyword_override_check(content)
@@ -439,20 +435,39 @@ def check_toxic(request):
             toxic_score = 0
 
         elif override_result == "soft_boost":
-            is_toxic = True
             toxic_score = max(toxic_score, 0.75)
+            is_toxic = toxic_score > 0.5
 
-        safer_alternative = (
-            get_safer_alternative(content, is_toxic)
-            if is_toxic else None
-        )
+        safer_alternative = None
 
         return JsonResponse({
-            'is_toxic': is_toxic,
-            'toxicity_score': round(toxic_score, 2),
-            'safer_alternative': safer_alternative,
+            'is_toxic': bool(is_toxic),
+            'toxicity_score': float(round(toxic_score, 2)),
         })
 
+
+    except Exception as e:
+        print("JSON ERROR:", e)
+        return JsonResponse({'error': "Invalid JSON"}, status=400)
+
+# ============================================
+# API ENDPOINT: CHECK IMAGE TOXIC (AJAX)
+# ============================================
+
+@login_required(login_url='login')
+@require_http_methods(["POST"])
+def check_image_toxic(request):
+    """
+    AJAX endpoint to check image toxicity before previewing.
+    Expects FormData with 'image' file.
+    """
+    try:
+        if 'image' not in request.FILES:
+            return JsonResponse({'error': 'No image file provided'}, status=400)
+        
+        image = request.FILES['image']
+        result = analyze_image_toxicity(image)
+        return JsonResponse(result)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 

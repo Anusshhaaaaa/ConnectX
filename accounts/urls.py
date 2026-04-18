@@ -18,8 +18,15 @@ urlpatterns = [
     path('discover/', views.discover_users, name='discover_users'),
     
     path('profile/', views.profile_view, name='profile'),
+    path('post/', views.create_post, name='create_post'),
+    path('post/<int:post_id>/delete/', views.delete_post, name='delete_post'),
+    path('post/<int:post_id>/like/', views.like_post, name='like_post'),
+    path('dashboard/', views.analytics_dashboard, name='analytics_dashboard'),
+
     path('accounts/logout/', views.logout_view, name='logout'),
     path('edit_profile/', views.edit_profile, name='edit_profile'),
     path('help/', views.help_page, name='help'),
 
+    path('api/check-toxic/', views.check_toxic, name='check_toxic'),
+    path('api/check-image-toxic/', views.check_image_toxic, name='check_image_toxic'),
 ]
