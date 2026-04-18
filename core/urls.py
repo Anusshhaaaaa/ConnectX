@@ -17,6 +17,7 @@ urlpatterns = [
     path('post/<int:post_id>/like/', views.like_post, name='like_post'),
     path('dashboard/', views.analytics_dashboard, name='analytics_dashboard'),
     path('api/check-toxic/', views.check_toxic, name='check_toxic'),
+    path('api/check-image-toxic/', views.check_image_toxic, name='check_image_toxic'),
     path('comment/<int:post_id>/', views.add_comment, name='add_comment'),
 
 

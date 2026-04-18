@@ -213,6 +213,9 @@
         }
     }
 </style>
+    <!-- SweetAlert2 CDN for image toxicity alerts -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 {% endblock %}
 
 {% block content %}
@@ -223,11 +226,7 @@
             Create New Post
         </h2>
 
-        {% if error %}
-        <div class="alert alert-danger" style="background: #ffebee; color: #c62828; padding: 12px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #f44336;">
-            {{ error }}
-        </div>
-        {% endif %}
+
 
         {% if safer_alternative %}
         <div class="suggestion-box" style="display: block;">
@@ -259,13 +258,13 @@
 
                 <div id="toxicIndicator" class="toxic-indicator"></div>
 
-                <div id="suggestionBox" class="suggestion-box">
+                {% comment %} <div id="suggestionBox" class="suggestion-box">
                     <h5>💡 Suggested Alternative:</h5>
                     <p id="suggestionText"></p>
                     <button type="button" id="useSuggestionBtn" class="btn btn-secondary" style="width: auto; margin-top: 8px; padding: 6px 12px; font-size: 13px;">
                         Use This Suggestion
                     </button>
-                </div>
+                </div> {% endcomment %}
             </div>
 
             <div class="form-group">
@@ -301,9 +300,18 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+        <script>
 (function() {
     'use strict';
+
+    if (window.errorMessage) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Upload Failed',
+            text: window.errorMessage,
+            confirmButtonColor: '#667eea',
+        });
+    }
 
     // Elements
     const contentTextarea = document.getElementById('content');
@@ -320,7 +328,8 @@
     const postBtn = document.getElementById('postBtn');
     const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-    let typingTimer;
+let typingTimer;
+    let lastContent = '';
 
     // Character counter
     function updateCharCount() {
@@ -345,30 +354,101 @@
         updateCharCount();
         
         typingTimer = setTimeout(() => {
+            const trimmed = this.value.trim();
+            if (!trimmed) {
+                lastContent = '';
+            }
             checkToxicContent(this.value);
-        }, 500);
+        }, 800);
     });
 
     // Initial count
     updateCharCount();
 
-    // Image preview
-    imageInput.addEventListener('change', function() {
+    // Image toxicity check + preview
+    imageInput.addEventListener('change', async function() {
         if (this.files && this.files[0]) {
             const file = this.files[0];
+            
+            // Size check
             if (file.size > 5 * 1024 * 1024) {
-                alert('Image must be less than 5MB');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'File too large',
+                    text: 'Image must be less than 5MB',
+                    confirmButtonColor: '#667eea',
+                });
                 this.value = '';
                 return;
             }
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                previewImage.src = e.target.result;
-                previewBox.style.display = 'block';
-                removeImageBtn.style.display = 'inline-flex';
-            };
-            reader.readAsDataURL(file);
+            // Toxicity check
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+const response = await fetch('{% url 'check_image_toxic' %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.is_toxic) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: '🚫 Toxic Image Detected!',
+                        html: `
+                            <div style="text-align: left;">
+                                <strong>Reason:</strong><br>${data.reason}<br><br>
+                                <strong>This contains toxic content. Please change to another image.</strong>
+                            </div>
+                        `,
+                        confirmButtonColor: '#667eea',
+                        customClass: {
+                            popup: 'swal-wide'
+                        },
+                        allowOutsideClick: false,
+                        allowEscapeKey: false
+                    });
+                    // Clear image
+                    this.value = '';
+                    previewBox.style.display = 'none';
+                    previewImage.src = '';
+                } else {
+                    // Safe: show preview
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImage.src = e.target.result;
+                        previewBox.style.display = 'block';
+                        removeImageBtn.style.display = 'inline-flex';
+                    };
+                    reader.readAsDataURL(file);
+
+                    // Optional success toast
+                    Swal.fire({
+                        icon: 'success',
+                        title: '✅ Image is safe!',
+                        text: 'Preview shown below.',
+                        timer: 1500,
+                        showConfirmButton: false,
+                        toast: true,
+                        position: 'top-end'
+                    });
+                }
+            } catch (error) {
+                console.error('Image toxicity check failed:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Check failed',
+                    text: 'Could not verify image safety. Please try again.',
+                    confirmButtonColor: '#667eea',
+                });
+                this.value = '';
+            }
         }
     });
 
@@ -380,37 +460,40 @@
     });
 
     // Toxicity check
-    function checkToxicContent(content) {
-        if (content.trim().length < 3) {
+function checkToxicContent(content) {
+        content = content.trim();
+        if (!content || content.length < 3) {
             hideToxicIndicator();
             return;
         }
+        if (content === lastContent) return;
+        lastContent = content;
 
-        fetch('{% url "check_toxic" %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrftoken,
-            },
-            body: JSON.stringify({ content: content })
-        })
-        .then(response => response.json())
-        .then(data => {
+fetch('{% url 'check_toxic' %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify({ content: content })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("API HIT:", data); // 🔥 DEBUG
+
             if (data.is_toxic) {
-                showToxicIndicator('danger', '⚠️', 'Toxic content detected', 'Please revise your message before posting.');
-                if (data.safer_alternative) {
-                    suggestionText.textContent = data.safer_alternative;
-                    suggestionBox.style.display = 'block';
-                }
+                showToxicIndicator('danger', '⚠️', 'Toxic content detected', 'Please revise your message.');
+                suggestionText.textContent = "Please rephrase your message politely.";
+                suggestionBox.style.display = 'block';
             } else {
-                showToxicIndicator('safe', '✓', 'Your message looks respectful', '');
+                showToxicIndicator('safe', '✓', 'Looks good', '');
                 suggestionBox.style.display = 'none';
             }
-        })
-        .catch(error => {
-            console.error('Toxicity check failed:', error);
-            hideToxicIndicator();
-        });
+    })
+    .catch(err => {
+        console.error("API ERROR:", err);
+        hideToxicIndicator();
+    });
     }
 
     function showToxicIndicator(type, icon, title, subtitle) {
@@ -419,7 +502,7 @@
             <span style="font-size: 20px;">${icon}</span>
             <div>
                 <strong>${title}</strong>
-                ${subtitle ? `<p style="margin: 2px 0; font-size: 13px;">${subtitle}</p>` : ''}
+            ${subtitle ? `<p style="margin: 2px 0;">${subtitle}</p>` : ''}
             </div>
         `;
         toxicIndicator.style.display = 'flex';
@@ -446,11 +529,19 @@
         const content = contentTextarea.value.trim();
         if (!content && !imageInput.files.length) {
             e.preventDefault();
-            alert('Please add content or an image.');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Empty Post',
+                text: 'Please add content or an image.',
+                confirmButtonColor: '#667eea',
+            });
             return false;
         }
+        // Prevent duplicate submits
+        postBtn.disabled = true;
+        postBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Posting...';
     });
 
 })();
-</script>
+        </script>
 {% endblock %}

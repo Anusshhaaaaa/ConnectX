@@ -71,7 +71,7 @@
             </button>
             {% endif %}
             {% if post.author == user %}
-            <a href="{% url 'delete_post' post.id %}" class="btn btn-danger btn-small" onclick="return confirm('Delete this post?');">
+            <a href="#" class="delete-post-btn" data-post-id="{{ post.id }}" onclick="confirmDelete({{ post.id }}, this); return false;">
                 <i class="fas fa-trash"></i>
             </a>
             {% endif %}

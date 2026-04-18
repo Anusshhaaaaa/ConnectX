@@ -34,6 +34,8 @@ vectorizer = pickle.load(open(vectorizer_path, "rb"))
 # 🧠 AI TOXICITY DETECTION
 # ==========================================================
 
+TOXIC_THRESHOLD = 0.5
+
 def detect_toxic_content(text):
     """
     Uses trained ML model to detect toxicity.
@@ -46,10 +48,11 @@ def detect_toxic_content(text):
     prediction = model.predict(text_vec)[0]
     probability = model.predict_proba(text_vec)[0][1]
 
-    is_toxic = probability > 0.83
+    is_toxic = bool(probability > TOXIC_THRESHOLD)
     toxic_score = float(probability)
 
     return is_toxic, toxic_score
+
 
 
 
@@ -80,11 +83,13 @@ def get_safer_alternative(text, is_toxic):
             contents=prompt,
         )
 
-        rewritten = response.text
+        rewritten = getattr(response, "text", "").strip()
 
         print("🔥 Gemini response:", rewritten)
 
-        return rewritten.strip()
+        if rewritten:
+            return str(rewritten).strip()
+        return text
 
     except Exception as e:
         print("❌ Gemini error:", e)
@@ -166,11 +171,11 @@ def analyze_image_toxicity(image_file):
         result_text = response.text.strip()
         print("🖼 Gemini image response:", result_text)
 
-        is_toxic = "YES" in result_text.upper()
+        is_toxic = result_text.upper().startswith("YES")
 
         return {
             "is_toxic": is_toxic,
-            "reason": result_text
+            "reason": "⚠️ This image contains harmful or inappropriate content. Please upload a different image."
         }
 
     except Exception as e:

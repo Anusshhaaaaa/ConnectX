@@ -4,7 +4,60 @@
 
 {% block extra_css %}
 <style>
-    /* Container */
+.profile-header {
+    position: relative;
+}
+.profile-settings-btn { position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 22px; cursor: pointer; color: #666; padding: 8px; border-radius: 50%; z-index: 10; transition: all 0.3s; }
+.profile-settings-btn:hover { background: rgba(0,0,0,0.1); transform: rotate(90deg); color: #333; }
+
+ /* Profile Settings Modal */
+        .settings-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; backdrop-filter: blur(5px); animation: fadeIn 0.2s; }
+        .settings-modal.active { display: flex; align-items: center; justify-content: center; }
+        @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
+        .settings-panel { background: white; border-radius: 20px; width: 90%; max-width: 350px; max-height: 80vh; overflow-y: auto; transform: translateY(20px) scale(.95); animation: slideUp 0.3s forwards; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+        @keyframes slideUp { to {transform: translateY(0) scale(1);} }
+        body.dark-mode .settings-panel { background: #1a1a1a; color: white; }
+        .settings-header { padding: 25px 20px; text-align: center; border-bottom: 1px solid #efefef; }
+        body.dark-mode .settings-header { border-bottom-color: #333; }
+        .settings-header h3 { font-size: 24px; font-weight: 600; margin: 0; }
+        .settings-list { list-style: none; padding: 0; margin: 0; }
+        .settings-item { 
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #efefef;
+    cursor: pointer;
+    transition: background .2s;
+    text-decoration: none;   /* remove underline */
+    color: inherit;          /* remove blue color */
+    font-weight: 500;
+}
+        body.dark-mode .settings-item { border-bottom-color: #333; }
+        .settings-item:hover {
+    background: #f8f9fa;
+    text-decoration: none;
+}
+        body.dark-mode .settings-item:hover {
+    background: #262626;
+}
+        .settings-item i { font-size: 20px; width: 24px; margin-right: 16px; opacity: .7; }
+        .settings-item span {
+    font-size: 15px;
+}
+        .close-settings { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; color: #999; cursor: pointer; padding: 5px; border-radius: 50%; }
+        body.dark-mode .close-settings { color: #ccc; }
+        .theme-toggle-settings { justify-content: space-between; }
+        .theme-status { font-size: 14px; color: #666; }
+        body.dark-mode .theme-status { color: #ccc; }
+        /* Switch Toggle */
+        .switch { position: relative; display: inline-block; width: 42px; height: 22px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 22px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #667eea; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+    /* Container - existing */
     .profile-container, .settings-container {
         max-width: 700px;
         margin: 0 auto;
@@ -12,7 +65,7 @@
         font-family: 'Inter', sans-serif;
     }
 
-    /* Profile Header */
+    /* Profile Header - existing */
     .profile-header {
         background: linear-gradient(135deg, #f0f7ff 0%, #e8f5e9 100%);
         border-radius: 20px;
@@ -27,6 +80,7 @@
         box-shadow: 0 15px 30px rgba(0,0,0,0.15);
     }
 
+    /* Rest of existing styles - profile-pic, stats-row, etc. */
     .profile-pic {
         width: 110px;
         height: 110px;
@@ -53,7 +107,6 @@
         margin-bottom: 20px;
     }
 
-    /* Stats Row */
     .stats-row {
         display: flex;
         justify-content: space-around;
@@ -171,14 +224,16 @@
     .stat-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.12); }
     .stat-number { font-size: 20px; font-weight: 700; color: #333; margin-bottom: 5px; }
     .stat-label { font-size: 12px; color: #777; text-transform: uppercase; }
-
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="profile-container">
     <!-- Profile Header -->
-    <div class="profile-header">
+<div class="profile-header">
+        <button onclick="openProfileSettings()" class="profile-settings-btn" title="Settings">
+            <i class="fas fa-cog"></i>
+        </button>
         <div class="profile-pic">{{ request.user.username.0|upper }}</div>
         <div class="username">{{ request.user.username }}</div>
         <div class="bio">No bio available</div>
@@ -224,18 +279,18 @@
                             <div class="timestamp"><i class="fas fa-clock"></i> {{ post.created_at|date:"M d, Y H:i" }}</div>
                         </div>
                     </div>
-                    <a href="{% url 'delete_post' post.id %}" class="btn btn-danger btn-small" onclick="return confirm('Delete this post?');">
+                    <a href="#" class="delete-post-btn" data-post-id="{{ post.id }}" onclick="confirmDelete({{ post.id }}, this); return false;">
                         <i class="fas fa-trash"></i>
                     </a>
                 </div>
 
                 <!-- Toxic Warning -->
-                {% if post.is_toxic %}
+                {% comment %} {% if post.is_toxic %}
                 <div class="toxic-warning" style="margin:15px;">
                     <p><strong>⚠️ Toxic Content Detected</strong></p>
                     <p>Toxicity Score: {{ post.toxic_score|floatformat:2 }}%</p>
                 </div>
-                {% endif %}
+                {% endif %} {% endcomment %}
 
                 <!-- Post Body -->
                 <div class="post-body">
@@ -294,4 +349,118 @@
         </div>
     </div>
 </div>
+
+    <!-- Profile Settings Modal -->
+    <div class="settings-modal" id="profileSettingsModal">
+        <div class="settings-panel">
+            <button class="close-settings" onclick="closeProfileSettings()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="settings-header">
+                <h3>Settings</h3>
+            </div>
+            <ul class="settings-list">
+                <li class="settings-item theme-toggle-settings" onclick="toggleTheme()">
+                    <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+                        <div style="display:flex; align-items:center; gap: 12px;">
+                            <i class="fas fa-moon"></i>
+                            <span>Dark Mode</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="profileThemeSwitch">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </li>
+                <a href="{% url 'edit_profile' %}" onclick="closeProfileSettings()" class="settings-item">
+                    <i class="fas fa-user-edit"></i>
+                    <span>Edit Profile</span>
+                    <i class="fas fa-chevron-right" style="margin-left:auto; opacity:.5;"></i>
+                </a>
+                <a href="{% url 'help' %}" onclick="closeProfileSettings()" class="settings-item">
+                    <i class="fas fa-question-circle"></i>
+                    <span>Help</span>
+                    <i class="fas fa-chevron-right" style="margin-left:auto; opacity:.5;"></i>
+                </a>
+                <a href="{% url 'logout' %}" onclick="closeProfileSettings()" class="settings-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                    <i class="fas fa-chevron-right" style="margin-left:auto; opacity:.5;"></i>
+                </a>
+            </ul>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+
+function openProfileSettings() {
+    const modal = document.getElementById("profileSettingsModal");
+    if (modal) {
+        modal.classList.add("active");
+        document.body.style.overflow = "hidden";
+    }
+}
+
+function closeProfileSettings() {
+    const modal = document.getElementById("profileSettingsModal");
+    if (modal) {
+        modal.classList.remove("active");
+        document.body.style.overflow = "";
+    }
+}
+
+function toggleTheme() {
+    const body = document.body;
+    const switchBtn = document.getElementById("profileThemeSwitch");
+
+    body.classList.toggle("dark-mode");
+
+    if (body.classList.contains("dark-mode")) {
+        localStorage.setItem("theme", "dark");
+        if (switchBtn) switchBtn.checked = true;
+    } else {
+        localStorage.setItem("theme", "light");
+        if (switchBtn) switchBtn.checked = false;
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const savedTheme = localStorage.getItem("theme");
+    const switchBtn = document.getElementById("profileThemeSwitch");
+    const modal = document.getElementById("profileSettingsModal");
+
+    // Load saved theme
+    if (savedTheme === "dark") {
+        document.body.classList.add("dark-mode");
+        if (switchBtn) switchBtn.checked = true;
+    }
+
+    // Switch toggle
+    if (switchBtn) {
+        switchBtn.addEventListener("change", toggleTheme);
+    }
+
+    // Close modal if clicking outside
+    if (modal) {
+        modal.addEventListener("click", function (e) {
+            if (e.target === modal) {
+                closeProfileSettings();
+            }
+        });
+    }
+
+    // Close modal with ESC
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+            closeProfileSettings();
+        }
+    });
+
+});
+
+</script>
 {% endblock %}
